@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <HWCDC.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -65,10 +66,13 @@
 #include <OSCBoards.h>
 #include <SLIPEncodedSerial.h>
 
-SLIPEncodedSerial SLIPSerial(Serial);
+//SLIPEncodedSerial SLIPSerial(Serial);  for regular ESP32
+//HardwareSerial MySerial(0);
+//SLIPEncodedSerial SLIPSerial(Serial); // for XIAO ESP32C3
 
 #include "secp256k1.h"
 #include "wally_core.h"
+#include "wally_crypto.h"
 #include "wally_bip32.h"
 #include "wally_bip39.h"
 #include "wally_address.h"
@@ -79,6 +83,10 @@ SLIPEncodedSerial SLIPSerial(Serial);
 extern "C" {
 #include "ccan/base64/base64.h"
 }
+
+// Endianess
+#define SPI_SHIFT_DATA(data, len) __builtin_bswap32((uint32_t)data<<(32-len))
+#define SPI_REARRANGE_DATA(data, len) (__builtin_bswap32(data)>>(32-len))
 
 // forward declaration
 void err(const char * message, void * data = NULL);
@@ -109,9 +117,9 @@ void memzero(void *const pnt, const size_t len) {
 
 const uint8_t *fromhex(const char *str) {
   static uint8_t buf[FROMHEX_MAXLEN];
-  size_t len = strlen(str) / 2;
+  int len = strlen(str) / 2;
   if (len > FROMHEX_MAXLEN) len = FROMHEX_MAXLEN;
-  for (size_t i = 0; i < len; i++) {
+  for (int i = 0; i < len; i++) {
     uint8_t c = 0;
     if (str[i * 2] >= '0' && str[i * 2] <= '9') c += (str[i * 2] - '0') << 4;
     if ((str[i * 2] & ~0x20) >= 'A' && (str[i * 2] & ~0x20) <= 'F')
@@ -171,14 +179,21 @@ String toHex(const uint8_t * array, size_t arraySize){
     return result;
 }
 
+//HardwareSerial Serial0(0);
+// HWCDC SerialESP;  // for XIAO ESP32C3
+SLIPEncodedSerial SLIPSerial(Serial); // Serial for TA-1 SerialESP for seedstudio
+
+
 void setup()
 {
     //begin communication via I²C
     //Wire.setPins(SDA_PIN, SCL_PIN);
     //Wire.begin(SDA_PIN, SCL_PIN);
-    //u8g2.begin();
-    //u8x8.begin();
 
+    SLIPSerial.begin(115200);
+    Serial.begin(115200);
+  
+/*
     // Initialize NVS
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -190,8 +205,8 @@ void setup()
     ESP_ERROR_CHECK( err );
 
     // Open
-    printf("\n");
-    printf("Opening Non-Volatile Storage (NVS) handle... ");
+    //printf("\n");
+    //printf("Opening Non-Volatile Storage (NVS) handle... ");
     nvs_handle_t my_handle;
     err = nvs_open("storage", NVS_READWRITE, &my_handle);
     if (err != ESP_OK) {
@@ -233,6 +248,7 @@ void setup()
     }
 
     printf("\n");
+  */
   /*
     // Restart module
     for (int i = 10; i >= 0; i--) {
@@ -243,8 +259,7 @@ void setup()
     fflush(stdout);
     esp_restart();
   */
-    SLIPSerial.begin(115200);
-
+    
     char mnemonic[] = "virtual venture head silk sing decline same online option route question powder color position bicycle feature inside hollow luggage dirt harvest mail leave jacket";
 } 
 
@@ -321,10 +336,10 @@ void routeWallyBZero(OSCMessage &msg, int addressOffset)
 
   OSCMessage resp_msg("/wallyBZero");
   resp_msg.add("0");
-    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
         resp_msg.send(SLIPSerial);
-    SLIPSerial.endPacket(); 
-    resp_msg.empty();
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
 }
 
 void routeWallyFreeString(OSCMessage &msg, int addressOffset)
@@ -348,10 +363,387 @@ void routeWallySecpRandomize(OSCMessage &msg, int addressOffset)
 
   OSCMessage resp_msg("/wallyBZero");
   resp_msg.add("0");
-    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
         resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+}
+
+
+/* ----------------------------------------------------------------*/
+/* Crypto functions                                                */
+/* ----------------------------------------------------------------*/
+
+/* part of documentation but deprecated */
+/* void routeWallyEcSigFromBytesLen(OSCMessage &msg, int addressOffset)
+{
+  int res;
+  //uint8_t priv_key[33] = "7BC81198140916367B5CED9BADA28C37"; 
+  uint8_t priv_key[33];
+  size_t priv_key_len;
+  // uint8_t hash_key[33] = "C99A85979AD295811330C5689C730250";
+  uint8_t hash_key[33];
+  size_t hash_key_len;
+  uint32_t flags;
+  size_t* len;
+
+  priv_key_len = 32;
+  hash_key_len = 32;
+  int length;
+
+  if(msg.isString(0))
+  {
+      length=msg.getDataLength(0);
+      msg.getString(0, (char*)priv_key,length);
+  }
+
+  if(msg.isString(2))
+  {
+      length=msg.getDataLength(2);
+      msg.getString(2, (char*)hash_key,length);  
+  }
+
+
+  res = wally_ec_sig_from_bytes_len(
+            (uint8_t*)priv_key, 
+            priv_key_len, 
+            (uint8_t*)hash_key, 
+            hash_key_len, 
+            EC_FLAG_ECDSA, 
+            (unsigned char*)len
+        );
+
+  OSCMessage resp_msg("/IHW/wallyEcSigFromBytesLen");
+  resp_msg.add(len);
+
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+} */
+
+void routeWallyEcSigFromBytes(OSCMessage &msg, int addressOffset)
+{
+  int res;
+
+  uint8_t priv_key[32];
+  char char_priv_key[65]; // has to be inside the msg.isString() check ...
+
+  uint8_t hash_key[32];
+  char char_hash_key[65]; // has to be inside the msg.isString() check ...
+
+  uint8_t bytes_out[64];
+
+
+  if(msg.isString(0))
+  {
+      int length=msg.getDataLength(0);
+      msg.getString(0, char_priv_key, length);
+  }
+  if(msg.isString(2))
+  {
+      int length=msg.getDataLength(2);
+      msg.getString(2, char_hash_key, length); 
+  }
+
+  
+  memcpy(priv_key,
+         fromhex((const char*)char_priv_key),
+         32
+  );
+  memcpy(hash_key,
+         fromhex((const char*)char_hash_key),
+         32
+  );
+
+  res = wally_ec_sig_from_bytes(
+            priv_key,
+            32,
+            hash_key,
+            32,
+            EC_FLAG_ECDSA, 
+            bytes_out, 
+            64
+  );
+
+  /* Requirement by Arduino to stream strings back to requestor */
+  String hexStr;
+  hexStr = toHex(bytes_out, 64);
+
+  OSCMessage resp_msg("/IHW/wallyEcSigFromBytes");
+  resp_msg.add(hexStr.c_str());
+  resp_msg.add(char_priv_key);
+  resp_msg.add(char_hash_key);
+
+
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+
+  wally_free_string(char_priv_key);
+  wally_free_string(char_hash_key);
+
+}
+
+void routeWallyEcSigNormalize(OSCMessage &msg, int addressOffset)
+{
+  int res;
+
+  uint8_t sig[64];
+  char char_sig[129];
+
+  uint8_t bytes_out[64]; 
+ 
+
+  if(msg.isString(0))
+  {
+      int length=msg.getDataLength(0);
+      msg.getString(0, char_sig, length);
+  }
+
+  memcpy(sig,
+         fromhex(char_sig),
+         64
+  );
+
+  res = wally_ec_sig_normalize(
+            sig, 
+            EC_SIGNATURE_LEN, 
+            bytes_out, 
+            EC_SIGNATURE_LEN
+  );
+
+  /* Requirement by Arduino to stream strings back to requestor */
+  String hexStr;
+  hexStr = toHex(bytes_out, 64);
+
+  OSCMessage resp_msg("/IHW/wallyEcSigNormalize");
+  resp_msg.add(hexStr.c_str());
+  // resp_msg.add("test message");
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+}
+
+void routeWallyEcSigToDer(OSCMessage &msg, int addressOffset)
+{
+  int res;
+
+  uint8_t sig[64];
+
+  char str_sig[129];
+
+  uint8_t der[73]; 
+
+  size_t len;
+
+  if(msg.isString(0))
+  {
+      int length=msg.getDataLength(0);
+      msg.getString(0, str_sig,length);
+  }
+
+  memcpy(sig,
+         fromhex(str_sig),
+         64
+  );
+
+  res = wally_ec_sig_to_der(
+            sig, 
+            EC_SIGNATURE_LEN, 
+            der, 
+            EC_SIGNATURE_DER_MAX_LEN,
+            &len
+  );
+
+  /* Requirement by Arduino to stream strings back to requestor */
+  String hexStr;
+  hexStr = toHex(der, EC_SIGNATURE_DER_MAX_LEN);
+
+  OSCMessage resp_msg("/IHW/wallyEcSigToDer");
+  resp_msg.add(hexStr.c_str());
+  //resp_msg.add("test message");
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+}
+
+void routeWallyEcSigFromDer(OSCMessage &msg, int addressOffset)
+{
+  int res;
+
+  uint8_t der[72];
+
+  char str_der[145];
+
+  uint8_t sig[64]; 
+ 
+
+  if(msg.isString(0))
+  {
+    int length=msg.getDataLength(0);
+    msg.getString(0, (char*)str_der, length);
+  }
+  memcpy(der, 
+        fromhex(str_der),
+         72
+  );
+
+  res = wally_ec_sig_from_der(
+            der, 
+            72, 
+            sig, 
+            64
+  );
+
+  /* Requirement by Arduino to stream strings back to requestor */
+  String hexStr;
+  hexStr = toHex(sig, 64);
+
+  OSCMessage resp_msg("/IHW/wallyEcSigFromDer");
+  resp_msg.add(hexStr.c_str());
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+}
+
+void routeWallyEcSigVerify(OSCMessage &msg, int addressOffset)
+{
+  int res;
+  uint8_t bytes_der[72];
+  uint8_t bytes_out[64]; 
+  int bytes_der_len; 
+  int len;
+}
+
+
+/* ----------------------------------------------------------------*/
+/* wally bip39 functions                                           */
+/* ----------------------------------------------------------------*/
+
+void routeBip39GetLanguages(OSCMessage &msg, int addressOffset)
+{
+  int res;
+  char *output = NULL;
+
+  res = bip39_get_languages(&output);
+
+  OSCMessage resp_msg("/bip39GetLanguages");
+  resp_msg.add(output);
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+
+  wally_free_string(output);
+}
+
+void routeBip39GetWordlist(OSCMessage &msg, int addressOffset)
+{
+  int res;
+
+  if(msg.isString(0))
+  {
+    struct words *output;
+    int length=msg.getDataLength(0);
+    char lang[length];
+    msg.getString(0,lang,length);
+
+    res = bip39_get_wordlist(lang, &output);
+
+    OSCMessage resp_msg("/bip39GetWordlist");
+    resp_msg.add(output);
+    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
     SLIPSerial.endPacket(); 
     resp_msg.empty();
+  }
+}
+
+void routeBip39GetWord(OSCMessage &msg, int addressOffset)
+{
+  int res;
+  struct words *w;
+
+  if(msg.isString(0))
+  {
+    int length=msg.getDataLength(0);
+    char lang[length];
+    msg.getString(0,lang,length);
+    res = bip39_get_wordlist(lang, &w);
+  }
+
+  if(msg.isInt(1))
+  {
+    // don't forget problem with endianess
+    char *output;
+    int nth_word = msg.getInt(1);
+    res = bip39_get_word(w, nth_word, &output);
+
+    OSCMessage resp_msg("/bip39GetWordlist");
+
+    char str_nth_word[10];
+    sprintf(str_nth_word, "%d", nth_word);
+    resp_msg.add(str_nth_word);
+    resp_msg.add(output);
+
+    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+    SLIPSerial.endPacket(); 
+    resp_msg.empty();
+
+    wally_free_string(output);
+  }
+}
+
+void routeBip39NumberBouncer(OSCMessage &msg, int addressOffset)
+{
+  int res;
+
+  if(msg.isInt(0))
+  {
+    int nth_word = msg.getInt(0);
+
+    OSCMessage resp_msg("/bip39GetNumberBouncer");
+
+    char str_nth_word[10];
+    sprintf(str_nth_word, "%d", nth_word);
+    resp_msg.add((int32_t)nth_word);
+
+    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+    SLIPSerial.endPacket(); 
+    resp_msg.empty();
+  }
+}
+
+void routeBipMnemonicFromBytes(OSCMessage &msg, int addressOffset)
+{
+  boolean b;
+}
+
+void routeBipMnemonicToBytes(OSCMessage &msg, int addressOffset)
+{
+  boolean b;
+}
+
+void routeBipMnemonicValidate(OSCMessage &msg, int addressOffset)
+{
+  boolean b;
+}
+
+void routeBipMnemonicToSeed(OSCMessage &msg, int addressOffset)
+{
+  boolean b;
+}
+
+void routeBipMnemonicToSeed512(OSCMessage &msg, int addressOffset)
+{
+  boolean b;
 }
 
 
@@ -513,7 +905,7 @@ void routeMnemonicToBytes(OSCMessage &msg, int addressOffset)
       int length = msg.getDataLength(0);
       char phrase[length];
       msg.getString(0,phrase,length);
-      Serial.println(phrase);
+      //Serial.println(phrase);
 
       // converting recovery phrase to bytes
       res = bip39_mnemonic_to_bytes(NULL, phrase, bytes_out, sizeof(bytes_out), &len);
@@ -521,7 +913,7 @@ void routeMnemonicToBytes(OSCMessage &msg, int addressOffset)
 
     String hexStr;
     hexStr = toHex(bytes_out, 32);
-    Serial.println(hexStr);
+    //Serial.println(hexStr);
 
     OSCMessage resp_msg("/mnemonicToBytes");
     resp_msg.add(hexStr.c_str());
@@ -545,12 +937,10 @@ void routeMnemonicFromBytes(OSCMessage &msg, int addressOffset)
       int length = msg.getDataLength(0);
       char hexStr[length];
       msg.getString(0,hexStr,length);
-      Serial.println(hexStr);
+      //Serial.println(hexStr);
       
       res = bip39_mnemonic_from_bytes(NULL, (const unsigned char*)fromhex(hexStr), 32, &phrase);
     }
-
-    Serial.println(phrase);
 
     OSCMessage resp_msg("/mnemonicFromBytes");
     resp_msg.add(phrase);
@@ -563,7 +953,71 @@ void routeMnemonicFromBytes(OSCMessage &msg, int addressOffset)
 
 void routeBip32KeyFromParent(OSCMessage &msg, int addressOffset)
 {
-  boolean b;
+    int res;
+    int res2;
+    size_t len;
+
+    if(msg.isString(0))
+    {
+        //res = wally_init(0);
+
+        int length=msg.getDataLength(0);
+
+        char hexStr[length];
+        msg.getString(0,hexStr,length);
+
+        /**************** BIP-39 recovery phrase ******************/
+
+        // random buffer should be generated by TRNG or somehow else
+        // but we will use predefined one for demo purposes
+        // 16 bytes will generate a 12-word recovery phrase
+        uint8_t rnd[] = {
+            0xAC, 0x91, 0xD3, 0xBC, 0x1B, 0x7C, 0x06, 0x2E,
+            0x21, 0xB5, 0x86, 0xA0, 0x2D, 0xBE, 0x5D, 0x24
+        };
+
+         // creating a recovery phrase
+        char *phrase = NULL;
+        res = bip39_mnemonic_from_bytes(NULL, (const unsigned char*)fromhex((const char*)hexStr), 32, &phrase);
+        //res = bip39_mnemonic_from_bytes(NULL, rnd, sizeof(rnd), &phrase);
+        
+
+        // converting recovery phrase to seed
+        uint8_t seed[BIP39_SEED_LEN_512];
+        res2 = bip39_mnemonic_to_seed(phrase, "my password", seed, sizeof(seed), &len);
+
+        // don't forget to securely clean up the string when done
+        wally_free_string(phrase);
+
+        res = bip32_key_from_seed(seed, sizeof(seed), BIP32_VER_TEST_PRIVATE, 0, &root);
+        // get base58 xprv string
+        // char *xprv = NULL;
+        // res = bip32_key_to_base58(&root, BIP32_FLAG_KEY_PRIVATE, &xprv);
+
+        // master = ext_key ()
+        // ret = bip32_key_from_parent_path_str_n(master, 'm/0h/0h/'+str(x)+'h', len('m/0h/0h/'+str(x)+'h'), 0, FLAG_KEY_PRIVATE, derive_key_out)
+  
+        // ('bip32_key_from_parent_path_str', c_int, [POINTER(ext_key), c_char_p, c_uint32, c_uint32, POINTER(ext_key)]),
+
+        // deriving account key for native segwit, testnet: m/84h/1h/0h
+        ext_key pk;
+        uint32_t path[] = {
+          BIP32_INITIAL_HARDENED_CHILD+84, // 84h
+          BIP32_INITIAL_HARDENED_CHILD+1,  // 1h
+          BIP32_INITIAL_HARDENED_CHILD     // 0h
+        };
+
+        res = bip32_key_from_parent_path(&root,path, 3, BIP32_FLAG_KEY_PRIVATE, &pk);
+
+        char *xprv = NULL;
+        res = bip32_key_to_base58(&pk, BIP32_FLAG_KEY_PRIVATE, &xprv);
+        msg.add(xprv);
+    }
+
+    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+        msg.send(SLIPSerial);
+    SLIPSerial.endPacket(); 
+    msg.empty();
 }
 
 void routeBip32KeyFromParentPath(OSCMessage &msg, int addressOffset)
@@ -595,6 +1049,7 @@ void loop()
     
     if(!msg.hasError())
     {
+      /* Core functions */
         msg.route("/IHW/wallyInit", routeWallyInit);
         msg.route("/IHW/wallyCleanup", routeWallyCleanup);
         msg.route("/IHW/wallyGetSecpContext", routeWallyGetSecpContext);
@@ -604,16 +1059,36 @@ void loop()
         msg.route("/IHW/wallyFreeString", routeWallyFreeString);
         msg.route("/IHW/wallySecpRandomize", routeWallySecpRandomize);
 
+      /* Crypto functions */
+        
+        // deprecated in libwally-core code base
+        // msg.route("/IHW/wallyEcSigFromBytesLen", routeWallyEcSigFromBytesLen);
+        msg.route("/IHW/wallyEcSigFromBytes", routeWallyEcSigFromBytes);
+        msg.route("/IHW/wallyEcSigNormalize", routeWallyEcSigNormalize);
+        msg.route("/IHW/wallyEcSigToDer", routeWallyEcSigToDer);
+        msg.route("/IHW/wallyEcSigFromDer", routeWallyEcSigFromDer);
+
+      /* Bip39 functions*/
+        msg.route("/IHW/bip39GetLanguages", routeBip39GetLanguages);
+        msg.route("/IHW/bip39GetWordlist", routeBip39GetWordlist);
+        msg.route("/IHW/bip39GetWord", routeBip39GetWord);
+        msg.route("/IHW/bip39MnemonicFromBytes", routeBipMnemonicFromBytes);
+        msg.route("/IHW/bip39MnemonicToBytes", routeBipMnemonicToBytes);
+        msg.route("/IHW/bip39MnemonicValidate", routeBipMnemonicValidate);
+        msg.route("/IHW/bip39MnemonicToSeed", routeBipMnemonicToSeed);
+        msg.route("/IHW/bip39MnemonicToSeed512", routeBipMnemonicToSeed512);
+        msg.route("/IHW/bip39NumberBouncer", routeBip39NumberBouncer);
+
         msg.route("/IHW/mnemonic", routeMnemonic);
         msg.route("/IHW/mnemonicFromBytes", routeMnemonicFromBytes);
         msg.route("/IHW/mnemonicToBytes", routeMnemonicToBytes);
-        msg.route("/IHW/seed", routeEntropy);
+        //msg.route("/IHW/seed", routeEntropy);
         msg.route("/IHW/bip32_key_from_seed", routeBip32KeyFromSeed);
-        // msg.route("/IHW/bip32_key_from_parent", routeBip32KeyFromParent);
+        msg.route("/IHW/bip32_key_from_parent", routeBip32KeyFromParent);
         // msg.route("/IHW/bip32_key_from_parent_path", routeBip32KeyFromParentPath);
         // msg.route("/IHW/bip32_key_from_base58", routeBip32KeyFromBase58);
-        // msg.route("/IHW/slip21_key_from_seed", routeSlip21KeyFromSeed);
-        // msg.route("/IHW/trnd", routeTrnd);
+        msg.route("/IHW/slip21_key_from_seed", routeSlip21KeyFromSeed);
+        msg.route("/IHW/trnd", routeTrnd);
         // msg.route("/IHW/cbor", routeCborEcho);
     }
 
