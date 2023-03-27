@@ -1,4 +1,5 @@
 #include <Arduino.h>
+
 #include <Wire.h>
 #include <HWCDC.h>
 
@@ -16,6 +17,7 @@
 #include "esp_event.h"
 #include "esp_system.h"
 #include "nvs_flash.h"
+#include <Preferences.h>
 
 #include "lwip/err.h"
 #include "lwip/sockets.h"
@@ -76,6 +78,7 @@
 #include "wally_bip32.h"
 #include "wally_bip39.h"
 #include "wally_address.h"
+
 
 #include "wally_script.h"
 #include "wally_psbt.h"
@@ -180,8 +183,11 @@ String toHex(const uint8_t * array, size_t arraySize){
 }
 
 //HardwareSerial Serial0(0);
-// HWCDC SerialESP;  // for XIAO ESP32C3
-SLIPEncodedSerial SLIPSerial(Serial); // Serial for TA-1 SerialESP for seedstudio
+HWCDC SerialESP;
+SLIPEncodedSerial SLIPSerial(SerialESP); // for XIAO ESP32C3  
+//SLIPEncodedSerial SLIPSerial(Serial); // for AI Thinker ESP-C3-32S
+
+Preferences valise;    // ESP32-C3 to use NVS
 
 
 void setup()
@@ -191,77 +197,45 @@ void setup()
     //Wire.begin(SDA_PIN, SCL_PIN);
 
     SLIPSerial.begin(115200);
-    Serial.begin(115200);
-  
-/*
-    // Initialize NVS
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        // NVS partition was truncated and needs to be erased
-        // Retry nvs_flash_init
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        err = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK( err );
+    //Serial.begin(115200);
 
-    // Open
-    //printf("\n");
-    //printf("Opening Non-Volatile Storage (NVS) handle... ");
-    nvs_handle_t my_handle;
-    err = nvs_open("storage", NVS_READWRITE, &my_handle);
-    if (err != ESP_OK) {
-        printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-    } else {
-        printf("Done\n");
-
-        // Read
-        printf("Reading restart counter from NVS ... ");
-        int32_t restart_counter = 0; // value will default to 0, if not set yet in NVS
-        err = nvs_get_i32(my_handle, "restart_counter", &restart_counter);
-        switch (err) {
-            case ESP_OK:
-                printf("Done\n");
-                printf("Restart counter = %d\n", restart_counter);
-                break;
-            case ESP_ERR_NVS_NOT_FOUND:
-                printf("The value is not initialized yet!\n");
-                break;
-            default :
-                printf("Error (%s) reading!\n", esp_err_to_name(err));
-        }
-        // Write
-        printf("Updating restart counter in NVS ... ");
-        restart_counter++;
-        err = nvs_set_i32(my_handle, "restart_counter", restart_counter);
-        printf((err != ESP_OK) ? "Failed!\n" : "Done\n");
-
-        // Commit written value.
-        // After setting any values, nvs_commit() must be called to ensure changes are written
-        // to flash storage. Implementations may write to storage at other times,
-        // but this is not guaranteed.
-        printf("Committing updates in NVS ... ");
-        err = nvs_commit(my_handle);
-        printf((err != ESP_OK) ? "Failed!\n" : "Done\n");
-
-        // Close
-        nvs_close(my_handle);
-    }
-
-    printf("\n");
-  */
-  /*
-    // Restart module
-    for (int i = 10; i >= 0; i--) {
-        printf("Restarting in %d seconds...\n", i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-    printf("Restarting now.\n");
-    fflush(stdout);
-    esp_restart();
-  */
-    
-    char mnemonic[] = "virtual venture head silk sing decline same online option route question powder color position bicycle feature inside hollow luggage dirt harvest mail leave jacket";
 } 
+
+void routeValiseInit(OSCMessage &msg, int addressOffset)
+{
+    boolean res; 
+
+    valise.begin("vault", false);
+
+    const char* mnemonic = "wife balcony tortoise among impact arch conduct bronze vehicle story menu next brisk rigid mimic scissors monitor worth talk vanish cereal fence excess danger";
+    valise.putString("valise_mnemonic", mnemonic);
+
+    valise.end();
+
+    OSCMessage resp_msg("/valiseInit");
+    resp_msg.add("0");
+    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+        resp_msg.send(SLIPSerial);
+    SLIPSerial.endPacket(); 
+    resp_msg.empty();
+}
+
+void routeValiseGet(OSCMessage &msg, int addressOffset)
+{
+    valise.begin("vault", false);
+
+    String valise_mnemonic = valise.getString("valise_mnemonic", "");
+
+    valise.end();
+
+    OSCMessage resp_msg("/valiseGet");
+    resp_msg.add(valise_mnemonic.c_str());
+    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+        resp_msg.send(SLIPSerial);
+    SLIPSerial.endPacket(); 
+    resp_msg.empty();
+}
+
 
 void routeWallyInit(OSCMessage &msg, int addressOffset)
 {
@@ -271,8 +245,8 @@ void routeWallyInit(OSCMessage &msg, int addressOffset)
   resp_msg.add("0");
     SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
         resp_msg.send(SLIPSerial);
-    SLIPSerial.endPacket(); 
-    resp_msg.empty();
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
 }
 
 
@@ -586,10 +560,10 @@ void routeWallyEcSigFromDer(OSCMessage &msg, int addressOffset)
   {
     int length=msg.getDataLength(0);
     msg.getString(0, (char*)str_der, length);
-  }
+  };
   memcpy(der, 
         fromhex(str_der),
-         72
+        72
   );
 
   res = wally_ec_sig_from_der(
@@ -614,11 +588,381 @@ void routeWallyEcSigFromDer(OSCMessage &msg, int addressOffset)
 void routeWallyEcSigVerify(OSCMessage &msg, int addressOffset)
 {
   int res;
-  uint8_t bytes_der[72];
-  uint8_t bytes_out[64]; 
-  int bytes_der_len; 
-  int len;
+
+  uint8_t pub_key[33];
+  char str_pub_key[67];
+
+  uint8_t hash[32];
+  char str_hash[65];
+
+  uint8_t sig[64];
+  char str_sig[129];
+
+  if(msg.isString(0))
+  {
+    int length=msg.getDataLength(0);
+    msg.getString(0, (char*)str_pub_key, length);
+  };
+  memcpy(pub_key, 
+        fromhex(str_pub_key),
+        33
+  );
+
+  if(msg.isString(1))
+  {
+    int length=msg.getDataLength(0);
+    msg.getString(1, (char*)str_hash, length);
+  };
+  memcpy(hash, 
+        fromhex(str_hash),
+        32
+  );
+
+  if(msg.isString(2))
+  {
+    int length=msg.getDataLength(2);
+    msg.getString(2, (char*)str_sig, length);
+  }
+  memcpy(sig, 
+        fromhex(str_sig),
+        64
+  );
+
+  res = wally_ec_sig_verify(
+            pub_key, 
+            33, 
+            hash,
+            32,
+            EC_FLAG_ECDSA,
+            sig, 
+            64
+  );
+
+  OSCMessage resp_msg("/IHW/wallyEcSigVerify");
+  resp_msg.add("True");
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
 }
+
+void routeWallyEcSigToPublicKey(OSCMessage &msg, int addressOffset)
+{
+  int res;
+
+  uint8_t pub_key[33];
+
+  uint8_t hash[32];
+  char str_hash[65];
+
+  uint8_t sig[64];
+  char str_sig[129];
+
+  size_t len;
+
+
+
+  if(msg.isString(0))
+  {
+    int length=msg.getDataLength(0);
+    msg.getString(0, (char*)str_hash, length);
+  };
+  memcpy(hash, 
+        fromhex(str_hash),
+        32
+  );
+
+  if(msg.isString(1))
+  {
+    int length=msg.getDataLength(2);
+    msg.getString(1, (char*)str_sig, length);
+  }
+  memcpy(sig, 
+        fromhex(str_sig),
+        64
+  );
+
+  res = wally_ec_sig_to_public_key(
+            hash,
+            32,
+            sig, 
+            64,
+            pub_key,
+            len
+  );
+
+ /* Requirement by Arduino to stream strings back to requestor */
+  String hexStr;
+  hexStr = toHex(pub_key, 33);
+
+  OSCMessage resp_msg("/IHW/wallyEcSigToPublicKey");
+  resp_msg.add(hexStr.c_str());
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+}
+
+
+void routeWallyFormatBitcoinMessage(OSCMessage &msg, int addressOffset)
+{
+  int res;
+
+  uint8_t btc_msg[512];
+  char str_btc_msg[1025];
+
+  uint8_t btc_msg_hash[32];
+
+  int* len;
+  size_t* written;
+
+  if(msg.isString(0))
+  {
+    int length=msg.getDataLength(0);
+    msg.getString(0, (char*)str_btc_msg, length);
+    len = &length;
+  };
+
+  memcpy(btc_msg, 
+        fromhex(str_btc_msg),
+        *len
+  );
+
+  res = wally_format_bitcoin_message(
+        btc_msg, *len,
+        BITCOIN_MESSAGE_FLAG_HASH,
+        btc_msg_hash, 32,
+        written
+  );
+
+  /* Requirement by Arduino to stream strings back to requestor */
+  String hexStr;
+  hexStr = toHex(btc_msg_hash, 32);
+
+  OSCMessage resp_msg("/IHW/wallyFormatBitcoinMessage");
+  resp_msg.add(hexStr.c_str());
+  resp_msg.add(str_btc_msg);
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+
+}
+
+void routeWallyEcdh(OSCMessage &msg, int addressOffset)
+{
+  int res;
+
+  uint8_t pub_key[33]; 
+  char str_pub_key[66];
+
+  uint8_t priv_key[32];
+  char str_priv_key[64];
+
+  uint8_t shared_secret[32];
+
+
+  if(msg.isString(0))
+  {
+    int length=msg.getDataLength(0);
+    msg.getString(0, str_pub_key, length);
+  };
+
+  memcpy(pub_key, 
+        fromhex(str_pub_key),
+        33
+  );
+
+  if(msg.isString(1))
+  {
+    int length=msg.getDataLength(1);
+    msg.getString(1, str_priv_key, length);
+  };
+
+  memcpy(priv_key, 
+        fromhex(str_priv_key),
+        32
+  );
+
+
+  res = wally_ecdh(
+        (const unsigned char *)pub_key, EC_PUBLIC_KEY_LEN,
+        (const unsigned char *)priv_key, EC_PRIVATE_KEY_LEN,
+        (unsigned char*)shared_secret, SHA256_LEN
+  );
+
+  /* Requirement by Arduino to stream strings back to requestor */
+  String hexStr;
+  hexStr = toHex(shared_secret, 32);
+
+  String hexStrPub;
+  hexStrPub = toHex(pub_key, 33);
+
+  String hexStrPriv;
+  hexStrPriv = toHex(priv_key, 32);
+
+  OSCMessage resp_msg("/IHW/wallyEcdh");
+  resp_msg.add(hexStr.c_str());
+  resp_msg.add(hexStrPub.c_str());
+  resp_msg.add(hexStrPriv.c_str());
+
+  //resp_msg.add(str_pub_key);
+  //resp_msg.add(str_priv_key);
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+
+}
+
+/*void routeWallyS2cSigFromBytes(OSCMessage &msg, int addressOffset)
+{
+  int res;
+
+  uint8_t priv_key[32];
+  char str_priv_key[66];  // /* EC_PRIVATE_KEY_LEN - 32
+
+  uint8_t msg_hash[32];
+  char str_msg_hash[66]; // /* EC_MESSAGE_HASH_LEN - 32 
+
+  uint8_t s2c_data[32];
+  char str_s2c_data[66]; // /* WALLY_S2C_DATA_LEN - 32 
+
+  // /* EC_FLAG_ECDSA 
+
+  uint8_t s2c_opening_out[33];
+  char str_s2c_opening_out[68]; // /* WALLY_S2C_OPENING_LEN - 32 
+
+  uint8_t sig[64]; // /* EC_SIGNATURE_LEN - 64 
+
+  int len = 64;
+
+  if(msg.isString(0))
+  {
+    int length=msg.getDataLength(0);
+    msg.getString(0, (char*)str_priv_key, length);
+  };
+
+  memcpy(priv_key, 
+        fromhex(str_priv_key),
+        32
+  );
+
+  if(msg.isString(1))
+  {
+    int length=msg.getDataLength(1);
+    msg.getString(1, (char*)str_msg_hash, length);
+  };
+
+  memcpy(msg_hash, 
+        fromhex(str_msg_hash),
+        32
+  );
+
+  if(msg.isString(2))
+  {
+    int length=msg.getDataLength(2);
+    msg.getString(2, (char*)str_s2c_data, length);
+  };
+
+  memcpy(s2c_data, 
+        fromhex(str_s2c_data),
+        32
+  );
+
+  res = wally_s2c_sig_from_bytes(
+      priv_key, 32,
+      msg_hash, 32,
+      s2c_data, 32,
+      EC_FLAG_ECDSA, 
+      s2c_opening_out, 33,
+      sig, 64
+  ) 
+
+  // /* Requirement by Arduino to stream strings back to requestor 
+  String hexStrS2cOpeningOut;
+  hexStrS2cOpeningOut = toHex(s2c_opening_out, 33);
+
+  String hexStrSig;
+  hexStrSig = toHex(sig, 64);
+
+
+  OSCMessage resp_msg("/IHW/wallyS2cSigFromBytes");
+  resp_msg.add(hexStrS2cOpeningOut.c_str());
+  resp_msg.add(hexStrSig.c_str());
+
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+
+} */
+
+
+/* void routeWallyS2cCommitmentVerify(OSCMessage &msg, int addressOffset)
+{
+  int res;
+
+  uint8_t sig[64]; // /* EC_SIGNATURE_LEN - 64 
+  char str_sig[128];
+
+  uint8_t s2c_data[32];
+  char str_s2c_data[66]; // /* WALLY_S2C_DATA_LEN - 32 
+
+  uint8_t s2c_opening_out[33];
+  char str_s2c_opening_out[68]; // /* WALLY_S2C_OPENING_LEN - 32 
+
+  // /* EC_FLAG_ECDSA 
+
+  if(msg.isString(0))
+  {
+    int length=msg.getDataLength(0);
+    msg.getString(0, (char*)str_sig, length);
+  };
+
+  memcpy(sig, 
+        fromhex(str_sig),
+        64
+  );
+
+  if(msg.isString(1))
+  {
+    int length=msg.getDataLength(1);
+    msg.getString(1, (char*)str_s2c_data, length);
+  };
+
+  memcpy(s2c_data, 
+        fromhex(str_s2c_data),
+        32
+  );
+
+  if(msg.isString(2))
+  {
+    int length=msg.getDataLength(2);
+    msg.getString(2, (char*)str_s2c_opening_out, length);
+  };
+
+  memcpy(s2c_opening_out, 
+        fromhex(str_s2c_opening_out),
+        33
+  );
+
+  res = wally_s2c_commitment_verify(
+      sig, 64,
+      s2c_data, 32, 
+      s2c_opening_out, 33,
+      EC_FLAG_ECDSA
+  ) 
+
+  OSCMessage resp_msg("/IHW/wallyCommitmentVerify");
+  resp_msg.add("True");
+
+  SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
+      resp_msg.send(SLIPSerial);
+  SLIPSerial.endPacket(); 
+  resp_msg.empty();
+
+} */
 
 
 /* ----------------------------------------------------------------*/
@@ -736,9 +1080,42 @@ void routeBipMnemonicValidate(OSCMessage &msg, int addressOffset)
   boolean b;
 }
 
-void routeBipMnemonicToSeed(OSCMessage &msg, int addressOffset)
+void routeMnemonicToSeed(OSCMessage &msg, int addressOffset)
 {
-  boolean b;
+    int res;
+
+    char phrase[512];
+    if (msg.isString(0))
+    {
+        int length = msg.getDataLength(0);
+        msg.getString(0, phrase, length);
+    }
+
+    // Convert mnemonic to seed
+    uint8_t seed[BIP39_SEED_LEN_512];
+    size_t seed_len;
+    res = bip39_mnemonic_to_seed(phrase, "my password", seed, sizeof(seed), &seed_len);
+    // Generate BIP32 master key from seed
+    res = bip32_key_from_seed(seed, sizeof(seed), BIP32_VER_MAIN_PRIVATE, 0, &root);
+
+    // // Clear seed from memory for security
+    memset(seed, 0, sizeof(seed_len));
+
+    // // // Convert master_key to base58 string
+    char *base58_master_key = NULL;
+    res = bip32_key_to_base58(&root, BIP32_FLAG_KEY_PRIVATE, &base58_master_key);
+
+    // Send the result back
+    OSCMessage resp_msg("/IHW/mnemonicToSeed");
+    resp_msg.add(base58_master_key);
+
+    SLIPSerial.beginPacket();
+    resp_msg.send(SLIPSerial);
+    SLIPSerial.endPacket();
+    resp_msg.empty();
+
+    wally_free_string(base58_master_key);
+    wally_free_string(phrase);
 }
 
 void routeBipMnemonicToSeed512(OSCMessage &msg, int addressOffset)
@@ -789,58 +1166,6 @@ void routeEntropy(OSCMessage &msg, int addressOffset)
     //msg.add("2573548DF4251F3048ABA137EFEEC11E59C0738D47C88B46462EDE80BEFFA2CA");
 
     msg.add(seed);
-    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
-        msg.send(SLIPSerial);
-    SLIPSerial.endPacket(); 
-    msg.empty();
-}
-
-void routeBip32KeyFromSeed(OSCMessage &msg, int addressOffset)
-{
-    int res;
-    int res2;
-    size_t len;
-
-    if(msg.isString(0))
-    {
-        //res = wally_init(0);
-
-        int length=msg.getDataLength(0);
-
-        char hexStr[length];
-        msg.getString(0,hexStr,length);
-
-        /**************** BIP-39 recovery phrase ******************/
-
-        // random buffer should be generated by TRNG or somehow else
-        // but we will use predefined one for demo purposes
-        // 16 bytes will generate a 12-word recovery phrase
-        uint8_t rnd[] = {
-            0xAC, 0x91, 0xD3, 0xBC, 0x1B, 0x7C, 0x06, 0x2E,
-            0x21, 0xB5, 0x86, 0xA0, 0x2D, 0xBE, 0x5D, 0x24
-        };
-
-         // creating a recovery phrase
-        char *phrase = NULL;
-        res = bip39_mnemonic_from_bytes(NULL, (const unsigned char*)fromhex((const char*)hexStr), 32, &phrase);
-        //res = bip39_mnemonic_from_bytes(NULL, rnd, sizeof(rnd), &phrase);
-        
-
-        // converting recovery phrase to seed
-        uint8_t seed[BIP39_SEED_LEN_512];
-        res2 = bip39_mnemonic_to_seed(phrase, "my password", seed, sizeof(seed), &len);
-
-        // don't forget to securely clean up the string when done
-        wally_free_string(phrase);
-
-        res = bip32_key_from_seed(seed, sizeof(seed), BIP32_VER_TEST_PRIVATE, 0, &root);
-        //get base58 xprv string
-        char *xprv = NULL;
-        res = bip32_key_to_base58(&root, BIP32_FLAG_KEY_PRIVATE, &xprv);
-
-        msg.add(xprv);
-    }
-
     SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
         msg.send(SLIPSerial);
     SLIPSerial.endPacket(); 
@@ -954,6 +1279,98 @@ void routeMnemonicFromBytes(OSCMessage &msg, int addressOffset)
 void routeBip32KeyFromParent(OSCMessage &msg, int addressOffset)
 {
     int res;
+
+    char parent_key[112];
+    if (msg.isString(0))
+    {
+        int length = msg.getDataLength(0);
+        msg.getString(0, parent_key, length);
+    }
+
+    uint32_t child_index = msg.getInt(2);
+
+    // Convert base58 parent key to ext_key structure
+    ext_key parent_ext_key;
+    res = bip32_key_from_base58(parent_key, &parent_ext_key);
+    if (res != WALLY_OK)
+    {
+        // Handle the error
+        Serial.println("Error: Failed to convert parent key from base58");
+        return;
+    }
+
+    // Derive child key from parent key
+    ext_key child_ext_key;
+    res = bip32_key_from_parent(&parent_ext_key, child_index, BIP32_FLAG_KEY_PRIVATE, &child_ext_key);
+    if (res != WALLY_OK)
+    {
+        // Handle the error
+        Serial.println("Error: Failed to derive child key from parent key");
+        return;
+    }
+
+    // Convert child_ext_key to base58 string
+    char *base58_child_key = NULL;
+    res = bip32_key_to_base58(&child_ext_key, BIP32_FLAG_KEY_PRIVATE, &base58_child_key);
+    if (res != WALLY_OK)
+    {
+        // Handle the error
+        Serial.println("Error: Failed to convert child key to base58");
+        return;
+    }
+
+    // Send the result back
+    OSCMessage resp_msg("/IHW/bip32KeyFromParent");
+    resp_msg.add(base58_child_key);
+    resp_msg.add(parent_key);
+    resp_msg.add((int32_t)child_index);
+
+    SLIPSerial.beginPacket();
+    resp_msg.send(SLIPSerial);
+    SLIPSerial.endPacket();
+    resp_msg.empty();
+
+    wally_free_string(base58_child_key);
+}
+
+void routeBip32KeyToAddress(OSCMessage &msg, int addressOffset)
+{
+    int res;
+
+    // ext_key hdkey;
+    // char char_ext_key[111]; // has to be inside the msg.isString() check ...
+
+    // char *output = NULL;
+
+    // if (msg.isString(0))
+    // {
+        // int length = msg.getDataLength(0);
+        // msg.getString(0, char_ext_key, length);
+    // }
+
+    // res = bip32_key_from_base58(char_ext_key, &hdkey);
+
+    // res = wally_bip32_key_to_addr_segwit(&hdkey, "bc", 0, &output);
+//    res = wally_bip32_key_to_address(&hdkey, WALLY_ADDRESS_TYPE_P2SH_P2WPKH, WALLY_ADDRESS_VERSION_P2PKH_MAINNET, &output);
+
+
+    // Send the result back
+    OSCMessage resp_msg("/IHW/bip32KeyToAddress");
+    resp_msg.add("FOOOOO");
+
+    SLIPSerial.beginPacket();
+    resp_msg.send(SLIPSerial);
+    SLIPSerial.endPacket();
+    resp_msg.empty();
+
+    // Send the result back
+    // resp_msg.add(char_ext_key);
+    // wally_free_string(output);
+}
+
+void routeBip32KeyFromSeed(OSCMessage &msg, int addressOffset)
+{
+    int res;
     int res2;
     size_t len;
 
@@ -990,27 +1407,10 @@ void routeBip32KeyFromParent(OSCMessage &msg, int addressOffset)
         wally_free_string(phrase);
 
         res = bip32_key_from_seed(seed, sizeof(seed), BIP32_VER_TEST_PRIVATE, 0, &root);
-        // get base58 xprv string
-        // char *xprv = NULL;
-        // res = bip32_key_to_base58(&root, BIP32_FLAG_KEY_PRIVATE, &xprv);
-
-        // master = ext_key ()
-        // ret = bip32_key_from_parent_path_str_n(master, 'm/0h/0h/'+str(x)+'h', len('m/0h/0h/'+str(x)+'h'), 0, FLAG_KEY_PRIVATE, derive_key_out)
-  
-        // ('bip32_key_from_parent_path_str', c_int, [POINTER(ext_key), c_char_p, c_uint32, c_uint32, POINTER(ext_key)]),
-
-        // deriving account key for native segwit, testnet: m/84h/1h/0h
-        ext_key pk;
-        uint32_t path[] = {
-          BIP32_INITIAL_HARDENED_CHILD+84, // 84h
-          BIP32_INITIAL_HARDENED_CHILD+1,  // 1h
-          BIP32_INITIAL_HARDENED_CHILD     // 0h
-        };
-
-        res = bip32_key_from_parent_path(&root,path, 3, BIP32_FLAG_KEY_PRIVATE, &pk);
-
+        //get base58 xprv string
         char *xprv = NULL;
-        res = bip32_key_to_base58(&pk, BIP32_FLAG_KEY_PRIVATE, &xprv);
+        res = bip32_key_to_base58(&root, BIP32_FLAG_KEY_PRIVATE, &xprv);
+
         msg.add(xprv);
     }
 
@@ -1067,6 +1467,17 @@ void loop()
         msg.route("/IHW/wallyEcSigNormalize", routeWallyEcSigNormalize);
         msg.route("/IHW/wallyEcSigToDer", routeWallyEcSigToDer);
         msg.route("/IHW/wallyEcSigFromDer", routeWallyEcSigFromDer);
+        msg.route("/IHW/wallyEcSigVerify", routeWallyEcSigVerify);
+        msg.route("/IHW/wallyEcSigToPublicKey", routeWallyEcSigToPublicKey);
+        msg.route("/IHW/wallyFormatBitcoinMessage", routeWallyFormatBitcoinMessage);
+        msg.route("/IHW/wallyEcdh", routeWallyEcdh);
+        // only available starting from version release_0.8.8
+        // msg.route("/IHW/wallyS2cSigFromBytes", routeWallyS2cSigFromBytes);
+        // msg.route("/IHW/wallyS2cCommitmentVerify", routeWallyS2cCommitmentVerify);
+
+      /* Vaise functions */
+        msg.route("/IHW/valiseInit", routeValiseInit);
+        msg.route("/IHW/valiseGet", routeValiseGet);
 
       /* Bip39 functions*/
         msg.route("/IHW/bip39GetLanguages", routeBip39GetLanguages);
@@ -1075,16 +1486,19 @@ void loop()
         msg.route("/IHW/bip39MnemonicFromBytes", routeBipMnemonicFromBytes);
         msg.route("/IHW/bip39MnemonicToBytes", routeBipMnemonicToBytes);
         msg.route("/IHW/bip39MnemonicValidate", routeBipMnemonicValidate);
-        msg.route("/IHW/bip39MnemonicToSeed", routeBipMnemonicToSeed);
-        msg.route("/IHW/bip39MnemonicToSeed512", routeBipMnemonicToSeed512);
+        msg.route("/IHW/mnemonicToSeed", routeMnemonicToSeed);
+//        msg.route("/IHW/bip39MnemonicToSeed512", routeBipMnemonicToSeed512);
         msg.route("/IHW/bip39NumberBouncer", routeBip39NumberBouncer);
-
+        
         msg.route("/IHW/mnemonic", routeMnemonic);
         msg.route("/IHW/mnemonicFromBytes", routeMnemonicFromBytes);
         msg.route("/IHW/mnemonicToBytes", routeMnemonicToBytes);
         //msg.route("/IHW/seed", routeEntropy);
         msg.route("/IHW/bip32_key_from_seed", routeBip32KeyFromSeed);
-        msg.route("/IHW/bip32_key_from_parent", routeBip32KeyFromParent);
+        msg.route("/IHW/bip32KeyFromParent", routeBip32KeyFromParent);
+        msg.route("/IHW/bip32KeyToAddress", routeBip32KeyToAddress);
+
+        
         // msg.route("/IHW/bip32_key_from_parent_path", routeBip32KeyFromParentPath);
         // msg.route("/IHW/bip32_key_from_base58", routeBip32KeyFromBase58);
         msg.route("/IHW/slip21_key_from_seed", routeSlip21KeyFromSeed);
