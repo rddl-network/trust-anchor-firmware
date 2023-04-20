@@ -6,4 +6,4 @@
 	url = https://github.com/diybitcoinhardware/secp256k1-embedded.git
 [submodule "lib/OSC"]
 	path = lib/OSC
-	url = https://github.com/CNMAT/OSC.git
+	url = git@github.com:rddl-network/OSC.git
