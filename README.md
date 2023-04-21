@@ -9,6 +9,9 @@ To use this repository, you have two options:
 1. Use the PlatformIO CLI Core: You can install it by following the instructions on the official [PlatformIO website](https://docs.platformio.org/en/latest/core/installation.html).
 2. Use Visual Studio Code: If you prefer using an IDE, you can install Visual Studio Code and the PlatformIO extension. Follow the instructions on the official [PlatformIO website](https://docs.platformio.org/en/latest/integration/ide/vscode.html) to set up the extension.
 
+This Repository contains submodules so you need to run:
+```git submodule update --init --recursive```
+
 ## Deployment
 
 To deploy the application, run the following command:
