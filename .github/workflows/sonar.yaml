@@ -1,0 +1,96 @@
+---
+name: Sonar Scan
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    name: Sonar Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: |
+          pip3 install platformio
+      - name: Install build-wrapper
+        run: |
+          cd /tmp || exit
+          echo "Downloading build-wrapper....."
+          if [ -d "/tmp/build-wrapper-linux-x86.zip" ];then
+              rm /tmp/build-wrapper-linux-x86.zip
+          fi
+          wget -q https://sonarqube.rddl.io/static/cpp/build-wrapper-linux-x86.zip
+          echo "Download completed."
+
+          echo "Unziping downloaded file..."
+          if [ -d "/tmp/build-wrapper-linux-x86" ];then
+              rm -rf /tmp/build-wrapper-linux-x86
+          fi
+          unzip build-wrapper-linux-x86.zip
+          echo "Unzip completed."
+          rm build-wrapper-linux-x86.zip
+
+          echo "Installing to opt..."
+          if [ -d "/var/opt/build-wrapper-linux-x86" ];then
+              sudo rm -rf /var/opt/build-wrapper-linux-x86
+          fi
+          sudo mv build-wrapper-linux-x86 /var/opt
+
+          echo "Symnlinking to /usr/bin..."
+          if [ -d "/usr/bin/build-wrapper-linux-x86-64" ];then
+              sudo rm -rf /usr/bin/build-wrapper-linux-x86-64
+          fi
+          sudo ln -s /var/opt/build-wrapper-linux-x86/build-wrapper-linux-x86-64 /usr/bin/build-wrapper-linux-x86-64
+          echo "Installation completed successfully."
+      - name: Install sonar-scanner
+        run: |
+          export VERSION=4.8.0.2856
+          cd /tmp || exit
+          echo "Downloading sonar-scanner....."
+          if [ -d "/tmp/sonar-scanner-cli-${VERSION}-linux.zip" ];then
+              rm /tmp/sonar-scanner-cli-${VERSION}-linux.zip
+          fi
+          wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${VERSION}-linux.zip
+          echo "Download completed."
+
+          echo "Unziping downloaded file..."
+          if [ -d "/tmp/sonar-scanner-${VERSION}-linux" ];then
+              rm -rf /tmp/sonar-scanner-${VERSION}-linux
+          fi
+          unzip sonar-scanner-cli-${VERSION}-linux.zip
+          echo "Unzip completed."
+          rm sonar-scanner-cli-${VERSION}-linux.zip
+
+          echo "Installing to opt..."
+          if [ -d "/var/opt/sonar-scanner-${VERSION}-linux" ];then
+              sudo rm -rf /var/opt/sonar-scanner-${VERSION}-linux
+          fi
+          sudo mv sonar-scanner-${VERSION}-linux /var/opt
+
+          echo "Symnlinking to /usr/bin..."
+          if [ -d "/usr/bin/sonar-scanner" ];then
+              sudo rm -rf /usr/bin/sonar-scanner
+          fi
+          sudo ln -s /var/opt/sonar-scanner-${VERSION}-linux/bin/sonar-scanner /usr/bin/sonar-scanner
+          echo "Installation completed successfully."
+      - uses: actions/checkout@v3
+        with:
+          # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0
+          token: ${{ secrets.BOT_PAT }}
+          submodules: recursive
+      - name: Run sonar-scanner
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          build-wrapper-linux-x86-64 --out-dir sonarqube-out \
+            platformio ci --build-dir="./bin" --keep-build-dir --project-conf=platformio.ini ./src/main.cpp \
+            --lib="./lib/secp256k1-embedded/" --lib="./lib/OSC/" --lib="./lib/libwally-embedded/"
+          # Hack - point sonarqube to the real sources not the copy of it
+          # See also https://community.sonarsource.com/t/scanning-platformio-c-embeded-projects/35141/2
+          sed -i 's|trusted-anchor-firmware/bin|trusted-anchor-firmware|g' \
+            sonarqube-out/build-wrapper-dump.json
+          sed -i 's|\.pio/|bin/.pio/|g' \
+            sonarqube-out/build-wrapper-dump.json
+          sonar-scanner -Dsonar.cfamily.build-wrapper-output=sonarqube-out
