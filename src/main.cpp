@@ -34,6 +34,9 @@
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 
+// Open Crypto Controll imports
+#include "OCC/core/core.h"
+
 #define BIP32_INITIAL_HARDENED_CHILD 0x80000000
 
 char tempBuff[1024];
@@ -524,110 +527,6 @@ void routeValiseSeedGet(OSCMessage &msg, int addressOffset)
 
     resp_msg.empty();
     delay(20);
-}
-
-void routeWallyInit(OSCMessage &msg, int addressOffset)
-{
-    wally_init(0x00);
-
-    OSCMessage resp_msg("/wallyInit");
-    resp_msg.add("0");
-    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
-    resp_msg.send(SLIPSerial);
-    SLIPSerial.endPacket();
-    resp_msg.empty();
-}
-
-void routeWallyCleanup(OSCMessage &msg, int addressOffset)
-{
-    wally_cleanup(0x00);
-
-    OSCMessage resp_msg("/wallyCleanup");
-    resp_msg.add("0");
-    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
-    resp_msg.send(SLIPSerial);
-    SLIPSerial.endPacket();
-    resp_msg.empty();
-}
-
-void routeWallyGetSecpContext(OSCMessage &msg, int addressOffset)
-{
-    secp256k1_context_struct *ctxStrct;
-    wally_get_secp_context();
-
-    OSCMessage resp_msg("/wallyGetSecpContext");
-    resp_msg.add("0");
-    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
-    resp_msg.send(SLIPSerial);
-    SLIPSerial.endPacket();
-    resp_msg.empty();
-}
-
-void routeWallyGetNewSecpContext(OSCMessage &msg, int addressOffset)
-{
-    secp256k1_context_struct *ctxStrct;
-    // wally_get_new_secp_context();
-
-    OSCMessage resp_msg("/wallyGetNewSecpContext");
-    resp_msg.add("0");
-    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
-    resp_msg.send(SLIPSerial);
-    SLIPSerial.endPacket();
-    resp_msg.empty();
-}
-
-void routeWallySecpContextFree(OSCMessage &msg, int addressOffset)
-{
-    secp256k1_context_struct *ctxStrct;
-    // wally_secp_context_free(ctxStrct);
-
-    OSCMessage resp_msg("/wallySecpContextFree");
-    resp_msg.add("0");
-    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
-    resp_msg.send(SLIPSerial);
-    SLIPSerial.endPacket();
-    resp_msg.empty();
-}
-
-void routeWallyBZero(OSCMessage &msg, int addressOffset)
-{
-    char *bytes;
-    size_t len;
-    wally_bzero(bytes, len);
-
-    OSCMessage resp_msg("/wallyBZero");
-    resp_msg.add("0");
-    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
-    resp_msg.send(SLIPSerial);
-    SLIPSerial.endPacket();
-    resp_msg.empty();
-}
-
-void routeWallyFreeString(OSCMessage &msg, int addressOffset)
-{
-    char *str;
-    wally_free_string(str);
-
-    OSCMessage resp_msg("/wallyBZero");
-    resp_msg.add("0");
-    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
-    resp_msg.send(SLIPSerial);
-    SLIPSerial.endPacket();
-    resp_msg.empty();
-}
-
-void routeWallySecpRandomize(OSCMessage &msg, int addressOffset)
-{
-    unsigned char *bytes;
-    size_t len;
-    wally_secp_randomize(bytes, len);
-
-    OSCMessage resp_msg("/wallyBZero");
-    resp_msg.add("0");
-    SLIPSerial.beginPacket(); // mark the beginning of the OSC Packet
-    resp_msg.send(SLIPSerial);
-    SLIPSerial.endPacket();
-    resp_msg.empty();
 }
 
 /* ----------------------------------------------------------------*/
