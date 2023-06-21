@@ -1,7 +1,6 @@
 // SLIPSerialUtils.cpp
 #include "SLIPSerialUtils.h"
 
-
 // USBCDC SeriSerialESPal(0); // for AI Thinker ESP-C3-32S
 
 SLIPSerialUtils::SLIPSerialUtils() : SLIPSerial(SerialESP) {
@@ -16,6 +15,4 @@ void SLIPSerialUtils::sendOSCMessage(OSCMessage &resp_msg)
     resp_msg.send(SLIPSerial);
     SLIPSerial.endPacket();
     resp_msg.empty();
-    delay(20);
 }
-

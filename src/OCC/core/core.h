@@ -2,6 +2,13 @@
 #define OCC_CORE_H
 
 #include <OSCMessage.h> // If needed
+#include <wally_core.h>
+#include <wally_crypto.h>
+#include "wally_address.h"
+#include "wally_symmetric.h"
+
+#include "../SLIPSerialUtils/SLIPSerialUtils.h"
+#include "../../helper/helper.h"
 
 void routeWallyInit(OSCMessage &msg, int addressOffset);
 void routeWallyCleanup(OSCMessage &msg, int addressOffset);
@@ -11,5 +18,11 @@ void routeWallySecpContextFree(OSCMessage &msg, int addressOffset);
 void routeWallyBZero(OSCMessage &msg, int addressOffset);
 void routeWallyFreeString(OSCMessage &msg, int addressOffset);
 void routeWallySecpRandomize(OSCMessage &msg, int addressOffset);
+void routeWallySymKeyFromSeed(OSCMessage &msg, int addressOffset);
+void routeWallySymKeyFromParent(OSCMessage &msg, int addressOffset);
+void routeEntropy(OSCMessage &msg, int addressOffset);
+void routeTrnd(OSCMessage &msg, int addressOffset);
+
+
 
 #endif // OCC_CORE_H
