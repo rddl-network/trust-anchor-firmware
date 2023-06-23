@@ -57,12 +57,11 @@ void routeWallyEcSigFromBytes(OSCMessage &msg, int addressOffset)
     String hexStr;
     hexStr = toHex(bytes_out, 64);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/wallyEcSigFromBytes");
     resp_msg.add(hexStr.c_str());
     resp_msg.add(char_priv_key);
     resp_msg.add(char_hash_key);
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 
     wally_free_string(char_priv_key);
     wally_free_string(char_hash_key);
@@ -97,11 +96,10 @@ void routeWallyEcSigNormalize(OSCMessage &msg, int addressOffset)
     String hexStr;
     hexStr = toHex(bytes_out, 64);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/wallyEcSigNormalize");
     resp_msg.add(hexStr.c_str());
     // resp_msg.add("test message");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallyEcSigToDer(OSCMessage &msg, int addressOffset)
@@ -137,11 +135,10 @@ void routeWallyEcSigToDer(OSCMessage &msg, int addressOffset)
     String hexStr;
     hexStr = toHex(der, EC_SIGNATURE_DER_MAX_LEN);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/wallyEcSigToDer");
     resp_msg.add(hexStr.c_str());
     // resp_msg.add("test message");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallyEcSigFromDer(OSCMessage &msg, int addressOffset)
@@ -173,10 +170,9 @@ void routeWallyEcSigFromDer(OSCMessage &msg, int addressOffset)
     String hexStr;
     hexStr = toHex(sig, 64);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/wallyEcSigFromDer");
     resp_msg.add(hexStr.c_str());
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallyEcSigVerify2(OSCMessage &msg, int addressOffset)
@@ -262,15 +258,13 @@ void routeWallyEcSigVerify2(OSCMessage &msg, int addressOffset)
     String hexStr3;
     hexStr3 = toHex(hash, 32);
 
-    SLIPSerialUtils slipSerialUtils;
-
     OSCMessage resp_msg("/IHW/wallyEcSigVerify2");
     resp_msg.add((int32_t)ret);
     resp_msg.add((int32_t)res);
     resp_msg.add(hexStr3.c_str());
     resp_msg.add(hexStr2.c_str());
     resp_msg.add(hexStr.c_str());
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallyEcSigToPublicKey(OSCMessage &msg, int addressOffset)
@@ -317,10 +311,9 @@ void routeWallyEcSigToPublicKey(OSCMessage &msg, int addressOffset)
     String hexStr;
     hexStr = toHex(pub_key, 33);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/wallyEcSigToPublicKey");
     resp_msg.add(hexStr.c_str());
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallyFormatBitcoinMessage(OSCMessage &msg, int addressOffset)
@@ -356,11 +349,10 @@ void routeWallyFormatBitcoinMessage(OSCMessage &msg, int addressOffset)
     String hexStr;
     hexStr = toHex(btc_msg_hash, 32);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/wallyFormatBitcoinMessage");
     resp_msg.add(hexStr.c_str());
     resp_msg.add(str_btc_msg);
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallyEcdh(OSCMessage &msg, int addressOffset)
@@ -410,7 +402,6 @@ void routeWallyEcdh(OSCMessage &msg, int addressOffset)
     String hexStrPriv;
     hexStrPriv = toHex(priv_key, 32);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/wallyEcdh");
     resp_msg.add(hexStr.c_str());
     resp_msg.add(hexStrPub.c_str());
@@ -418,5 +409,5 @@ void routeWallyEcdh(OSCMessage &msg, int addressOffset)
 
     // resp_msg.add(str_pub_key);
     // resp_msg.add(str_priv_key);
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }

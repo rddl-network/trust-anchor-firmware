@@ -3,10 +3,9 @@
 #include "wally_bip32.h"
 #include "wally_bip39.h"
 #include "../../helper/helper.h"
+#include <Preferences.h>
 
 #include "valise.h"
-
-Preferences valise; // ESP32-C3 to use NVS
 
 void routeValiseSign(OSCMessage &msg, int addressOffset)
 {
@@ -96,13 +95,12 @@ void routeValiseSign(OSCMessage &msg, int addressOffset)
     String derStr;
     derStr = toHex(der, 72);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/valiseSign");
     resp_msg.add((int32_t)res);
     resp_msg.add(pubStr.c_str());
     resp_msg.add(compactStr.c_str());
     resp_msg.add(derStr.c_str());
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -117,6 +115,7 @@ void routeValiseMnemonicSeedInit(OSCMessage &msg, int addressOffset)
        has to init menmonic and has to init seed
        cause, the seed is rquired for almost all bip32 calls
     */
+    Preferences valise; // ESP32-C3 to use NVS
     int res;
     size_t len;
     uint8_t bytes_out[BIP39_SEED_LEN_512];
@@ -133,10 +132,9 @@ void routeValiseMnemonicSeedInit(OSCMessage &msg, int addressOffset)
     valise.putString("valise_seed", (const char *)bytes_out);
     valise.end();
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/valiseMnemonicSeedInit");
     resp_msg.add("1");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -148,6 +146,7 @@ void routeValiseMnemonicSeedInit(OSCMessage &msg, int addressOffset)
  */
 void routeValiseMnemonicSet(OSCMessage &msg, int addressOffset)
 {
+    Preferences valise; // ESP32-C3 to use NVS
     valise.begin("vault", false);
 
     if (msg.isString(0))
@@ -161,10 +160,9 @@ void routeValiseMnemonicSet(OSCMessage &msg, int addressOffset)
 
     valise.end();
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/valiseMnemonicSet");
     resp_msg.add("1");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -175,16 +173,16 @@ void routeValiseMnemonicSet(OSCMessage &msg, int addressOffset)
  */
 void routeValiseMnemonicGet(OSCMessage &msg, int addressOffset)
 {
+    Preferences valise; // ESP32-C3 to use NVS
     valise.begin("vault", false);
 
     String valise_mnemonic = valise.getString("valise_mnemonic", "");
 
     valise.end();
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/valiseMnemonicGet");
     resp_msg.add(valise_mnemonic.c_str());
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -197,6 +195,7 @@ void routeValiseMnemonicGet(OSCMessage &msg, int addressOffset)
  */
 void routeValiseSeedSet(OSCMessage &msg, int addressOffset)
 {
+    Preferences valise; // ESP32-C3 to use NVS
     int res;
 
     char char_seed[129];
@@ -211,10 +210,9 @@ void routeValiseSeedSet(OSCMessage &msg, int addressOffset)
     valise.putString("valise_seed", (const char *)char_seed);
     valise.end();
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/valiseSeedSet");
     resp_msg.add("1");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 
     resp_msg.empty();
     delay(20);
@@ -229,22 +227,21 @@ void routeValiseSeedSet(OSCMessage &msg, int addressOffset)
  */
 void routeValiseSeedGet(OSCMessage &msg, int addressOffset)
 {
+    Preferences valise; // ESP32-C3 to use NVS
     valise.begin("vault", false);
     String valise_seed = valise.getString("valise_seed", "");
     valise.end();
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/valiseSeedGet");
     resp_msg.add(valise_seed.c_str());
     // resp_msg.add("hallo");
     // resp_msg.add(valise_seed);
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeValiseCborEcho(OSCMessage &msg, int addressOffset)
 {
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage msg2("/cbor/echo");
     int res;
     size_t len;
@@ -257,5 +254,5 @@ void routeValiseCborEcho(OSCMessage &msg, int addressOffset)
 
     msg2.add(
         "d08355a20101055001010101010101010101010101010101a10458246d65726961646f632e6272616e64796275636b406275636b6c616e642e6578616d706c655820c4af85ac4a5134931993ec0a1863a6e8c66ef4c9ac16315ee6fecd9b2e1c79a1");
-    slipSerialUtils.sendOSCMessage(msg2);
+    sendOSCMessage(msg2);
 } 

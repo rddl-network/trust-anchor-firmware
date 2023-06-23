@@ -3,10 +3,6 @@
 
 #include "../SLIPSerialUtils/SLIPSerialUtils.h"
 
-#include <Preferences.h>
-
-extern Preferences valise;
-
 void routeValiseSign(OSCMessage &msg, int addressOffset);
 void routeValiseMnemonicSeedInit(OSCMessage &msg, int addressOffset);
 void routeValiseMnemonicSet(OSCMessage &msg, int addressOffset);

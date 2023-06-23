@@ -12,22 +12,18 @@ void routeWallyInit(OSCMessage &msg, int addressOffset)
 {
     wally_init(0x00);
 
-    SLIPSerialUtils slipSerialUtils;
-
     OSCMessage resp_msg("/wallyInit");
     resp_msg.add("0");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallyCleanup(OSCMessage &msg, int addressOffset)
 {
     wally_cleanup(0x00);
 
-    SLIPSerialUtils slipSerialUtils;
-
     OSCMessage resp_msg("/wallyCleanup");
     resp_msg.add("0");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallyGetSecpContext(OSCMessage &msg, int addressOffset)
@@ -35,11 +31,9 @@ void routeWallyGetSecpContext(OSCMessage &msg, int addressOffset)
     secp256k1_context_struct *ctxStrct;
     wally_get_secp_context();
 
-    SLIPSerialUtils slipSerialUtils;
-
     OSCMessage resp_msg("/wallyGetSecpContext");
     resp_msg.add("0");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallyGetNewSecpContext(OSCMessage &msg, int addressOffset)
@@ -47,11 +41,9 @@ void routeWallyGetNewSecpContext(OSCMessage &msg, int addressOffset)
     secp256k1_context_struct *ctxStrct;
     // wally_get_new_secp_context();
 
-    SLIPSerialUtils slipSerialUtils;
-
     OSCMessage resp_msg("/wallyGetNewSecpContext");
     resp_msg.add("0");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallySecpContextFree(OSCMessage &msg, int addressOffset)
@@ -59,11 +51,9 @@ void routeWallySecpContextFree(OSCMessage &msg, int addressOffset)
     secp256k1_context_struct *ctxStrct;
     // wally_secp_context_free(ctxStrct);
 
-    SLIPSerialUtils slipSerialUtils;
-
     OSCMessage resp_msg("/wallySecpContextFree");
     resp_msg.add("0");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallyBZero(OSCMessage &msg, int addressOffset)
@@ -72,11 +62,9 @@ void routeWallyBZero(OSCMessage &msg, int addressOffset)
     size_t len;
     wally_bzero(bytes, len);
 
-    SLIPSerialUtils slipSerialUtils;
-
     OSCMessage resp_msg("/wallyBZero");
     resp_msg.add("0");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallyFreeString(OSCMessage &msg, int addressOffset)
@@ -84,11 +72,9 @@ void routeWallyFreeString(OSCMessage &msg, int addressOffset)
     char *str;
     wally_free_string(str);
 
-    SLIPSerialUtils slipSerialUtils;
-
     OSCMessage resp_msg("/wallyBZero");
     resp_msg.add("0");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeWallySecpRandomize(OSCMessage &msg, int addressOffset)
@@ -97,11 +83,9 @@ void routeWallySecpRandomize(OSCMessage &msg, int addressOffset)
     size_t len;
     wally_secp_randomize(bytes, len);
 
-    SLIPSerialUtils slipSerialUtils;
-
     OSCMessage resp_msg("/wallyBZero");
     resp_msg.add("0");
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -116,7 +100,6 @@ void routeWallySymKeyFromSeed(OSCMessage &msg, int addressOffset)
     int res;
     size_t len;
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/wallySymKeyFromSeed");
 
     uint8_t seed[BIP32_ENTROPY_LEN_512];
@@ -140,7 +123,7 @@ void routeWallySymKeyFromSeed(OSCMessage &msg, int addressOffset)
         resp_msg.add(hexStrSymKey.c_str());
     }
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -157,7 +140,6 @@ void routeWallySymKeyFromParent(OSCMessage &msg, int addressOffset)
 {
     int res;
     size_t len;
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/wallySymKeyFromParent");
 
     uint8_t parent_sym_key[HMAC_SHA512_LEN];
@@ -194,7 +176,7 @@ void routeWallySymKeyFromParent(OSCMessage &msg, int addressOffset)
         resp_msg.add(hexStrSymKey.c_str());
     }
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeEntropy(OSCMessage &msg, int addressOffset)
@@ -219,9 +201,8 @@ void routeEntropy(OSCMessage &msg, int addressOffset)
     }
 
     // msg.add("2573548DF4251F3048ABA137EFEEC11E59C0738D47C88B46462EDE80BEFFA2CA");
-    SLIPSerialUtils slipSerialUtils;
     msg.add(seed);
-    slipSerialUtils.sendOSCMessage(msg);
+    sendOSCMessage(msg);
 }
 
 void routeTrnd(OSCMessage &msg, int addressOffset)
@@ -243,9 +224,7 @@ void routeTrnd(OSCMessage &msg, int addressOffset)
             strcpy(trnd + i, tmp);
         }
 
-        SLIPSerialUtils slipSerialUtils;
-
         msg.add(trnd);
-        slipSerialUtils.sendOSCMessage(msg);
+        sendOSCMessage(msg);
     }
 }

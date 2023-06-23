@@ -25,10 +25,9 @@ void routeBip39GetLanguages(OSCMessage &msg, int addressOffset)
 
     res = bip39_get_languages(&output);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip39GetLanguages");
     resp_msg.add(output);
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 
     wally_free_string(output);
 }
@@ -54,10 +53,9 @@ void routeBip39GetWordlist(OSCMessage &msg, int addressOffset)
 
         res = bip39_get_wordlist(lang, &output);
 
-        SLIPSerialUtils slipSerialUtils;
         OSCMessage resp_msg("/bip39GetWordlist");
         resp_msg.add(output);
-        slipSerialUtils.sendOSCMessage(resp_msg);
+        sendOSCMessage(resp_msg);
     }
 }
 
@@ -90,14 +88,13 @@ void routeBip39GetWord(OSCMessage &msg, int addressOffset)
         int nth_word = msg.getInt(1);
         res = bip39_get_word(w, nth_word, &output);
 
-        SLIPSerialUtils slipSerialUtils;
         OSCMessage resp_msg("/bip39GetNthWord");
 
         char str_nth_word[10];
         sprintf(str_nth_word, "%d", nth_word);
         resp_msg.add(str_nth_word);
         resp_msg.add(output);
-        slipSerialUtils.sendOSCMessage(resp_msg);
+        sendOSCMessage(resp_msg);
 
         wally_free_string(output);
     }
@@ -111,13 +108,12 @@ void routeBip39NumberBouncer(OSCMessage &msg, int addressOffset)
     {
         int nth_word = msg.getInt(0);
 
-        SLIPSerialUtils slipSerialUtils;
         OSCMessage resp_msg("/bip39GetNumberBouncer");
 
         char str_nth_word[10];
         sprintf(str_nth_word, "%d", nth_word);
         resp_msg.add((int32_t)nth_word);
-        slipSerialUtils.sendOSCMessage(resp_msg);
+        sendOSCMessage(resp_msg);
     }
 }
 
@@ -134,7 +130,6 @@ void routeBip39MnemonicValidate(OSCMessage &msg, int addressOffset)
 {
     int res;
     size_t len;
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/Bip39MnemonicValidate");
 
     struct words *w;
@@ -158,7 +153,7 @@ void routeBip39MnemonicValidate(OSCMessage &msg, int addressOffset)
         resp_msg.add((int32_t)res);
     }
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeBip39MnemonicToSeed(OSCMessage &msg, int addressOffset)
@@ -182,10 +177,9 @@ void routeBip39MnemonicToSeed(OSCMessage &msg, int addressOffset)
     String hexStr;
     hexStr = toHex(bytes_out, 64);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip39MnemonicToSeed");
     resp_msg.add(hexStr.c_str());
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeBip39MnemonicToSeed512(OSCMessage &msg, int addressOffset)
@@ -209,10 +203,9 @@ void routeBip39MnemonicToSeed512(OSCMessage &msg, int addressOffset)
     String hexStr;
     hexStr = toHex(bytes_out, 64);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip39MnemonicToSeed");
     resp_msg.add(hexStr.c_str());
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeBip39Mnemonic(OSCMessage &msg, int addressOffset)
@@ -225,9 +218,8 @@ void routeBip39Mnemonic(OSCMessage &msg, int addressOffset)
 
     char *phrase = NULL;
     res = bip39_mnemonic_from_bytes(NULL, se_rnd, sizeof(se_rnd), &phrase);
-    SLIPSerialUtils slipSerialUtils;
     msg.add(phrase);
-    slipSerialUtils.sendOSCMessage(msg);
+    sendOSCMessage(msg);
 }
 
 void routeBip39MnemonicToBytes(OSCMessage &msg, int addressOffset)
@@ -250,10 +242,9 @@ void routeBip39MnemonicToBytes(OSCMessage &msg, int addressOffset)
     String hexStr;
     hexStr = toHex(bytes_out, 32);
     // Serial.println(hexStr);
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip39MnemonicToBytes");
     resp_msg.add(hexStr.c_str());
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeBip39MnemonicFromBytes(OSCMessage &msg, int addressOffset)
@@ -272,10 +263,9 @@ void routeBip39MnemonicFromBytes(OSCMessage &msg, int addressOffset)
 
         res = bip39_mnemonic_from_bytes(NULL, (const unsigned char *)fromhex(hexStr), 32, &phrase);
     }
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/Bip39MnemonicFromBytes");
     resp_msg.add(phrase);
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeBip39MnemonicToPrivateKey(OSCMessage &msg, int addressOffset)
@@ -305,10 +295,9 @@ void routeBip39MnemonicToPrivateKey(OSCMessage &msg, int addressOffset)
 
     String hexStr;
     hexStr = toHex(root.priv_key, 33);
-    SLIPSerialUtils slipSerialUtils;
     // Send the result back
     OSCMessage resp_msg("/IHW/BipMnemonicToPrivateKey");
     resp_msg.add(hexStr.c_str());
     resp_msg.add(base58_master_key);
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }

@@ -2,6 +2,7 @@
 #include "wally_bip39.h"
 #include "../../helper/helper.h"
 #include "../valise/valise.h"
+#include <Preferences.h>
 
 #include "bip32.h"
 
@@ -18,7 +19,6 @@ void routeBip32KeyInit(OSCMessage &msg, int addressOffset)
 {
     int res;
     size_t len;
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip32_key_init");
     uint32_t version = 0;   
     uint32_t depth = 0;
@@ -140,7 +140,7 @@ void routeBip32KeyInit(OSCMessage &msg, int addressOffset)
     bip32_key_free(output);
 
 SEND_RESPONSE:
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -152,11 +152,11 @@ SEND_RESPONSE:
  */
 void routeBip32KeyFromSeed(OSCMessage &msg, int addressOffset)
 {
+    Preferences valise; // ESP32-C3 to use NVS
     int res;
 
     uint8_t seed[64];
     char char_seed[129];
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip32KeyFromSeed");
 
     if (msg.isString(0))
@@ -263,7 +263,7 @@ void routeBip32KeyFromSeed(OSCMessage &msg, int addressOffset)
     else
         resp_msg.add("ERROR! Couldnt get seed");
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -279,9 +279,9 @@ void routeBip32KeyFromSeed(OSCMessage &msg, int addressOffset)
  */
 void routeBip32KeyFromParent(OSCMessage &msg, int addressOffset)
 {
+    Preferences valise; // ESP32-C3 to use NVS
     int res;
     size_t len;
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip32KeyfromParent");
 
     char *xprv = NULL;
@@ -395,7 +395,7 @@ void routeBip32KeyFromParent(OSCMessage &msg, int addressOffset)
 
     // bip32_key_free(pk);
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 void routeBip32KeyFromParent2(OSCMessage &msg, int addressOffset)
@@ -441,12 +441,11 @@ void routeBip32KeyFromParent2(OSCMessage &msg, int addressOffset)
     hexStr = toHex(child_ext_key.pub_key, 33);
 
     // Send the result back
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/bip32KeyFromParent");
     resp_msg.add(hexStr.c_str());
     resp_msg.add(base58_child_key);
     resp_msg.add((int32_t)child_index);
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 
     wally_free_string(base58_child_key);
 }
@@ -462,7 +461,6 @@ void routeBip32KeyToBase58(OSCMessage &msg, int addressOffset)
 {
     int res;
     size_t len;
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip32KeytoBase58");
 
     if (msg.isString(0))
@@ -510,7 +508,7 @@ void routeBip32KeyToBase58(OSCMessage &msg, int addressOffset)
     else
         resp_msg.add("ERROR! Couldnt get key");
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -525,10 +523,10 @@ void routeBip32KeyToBase58(OSCMessage &msg, int addressOffset)
  */
 void routeBip32KeyFromParentPathString(OSCMessage &msg, int addressOffset)
 {
+    Preferences valise;
     int res;
     size_t len;
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip32KeyFromParentPathString");
 
     char *xprv = NULL;
@@ -645,7 +643,7 @@ void routeBip32KeyFromParentPathString(OSCMessage &msg, int addressOffset)
     derived_keys.append(wif)
     */
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -660,9 +658,9 @@ void routeBip32KeyFromParentPathString(OSCMessage &msg, int addressOffset)
  */
 void routeBip32KeySerialize(OSCMessage &msg, int addressOffset)
 {
+    Preferences valise;
     int res;
     size_t len;
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip32KeySerialize");
 
     char *xprv = NULL;
@@ -760,7 +758,7 @@ void routeBip32KeySerialize(OSCMessage &msg, int addressOffset)
     hexStr = toHex(bytes_out, BIP32_SERIALIZED_LEN);
     resp_msg.add(hexStr.c_str());
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -774,7 +772,6 @@ void routeBip32KeyUnserialize(OSCMessage &msg, int addressOffset)
 {
     int res;
     size_t len;
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip32KeyUnserialize");
 
     uint8_t serialized_key[BIP32_SERIALIZED_LEN];
@@ -804,7 +801,7 @@ void routeBip32KeyUnserialize(OSCMessage &msg, int addressOffset)
         // bip32_key_free(unserialized_key_root);
     }
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -819,7 +816,6 @@ void routeBip32KeyStripPriateKey(OSCMessage &msg, int addressOffset)
 {
     int res;
     size_t len;
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip32KeyStripPriateKey");
 
     if (msg.isString(0))
@@ -840,7 +836,7 @@ void routeBip32KeyStripPriateKey(OSCMessage &msg, int addressOffset)
     else
         resp_msg.add("ERROR! Couldnt get key");
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -855,9 +851,9 @@ void routeBip32KeyStripPriateKey(OSCMessage &msg, int addressOffset)
  */
 void routeBip32KeyGetFingerprint(OSCMessage &msg, int addressOffset)
 {
+    Preferences valise;
     int res;
     size_t len;
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip32KeyGetFingerprint");
 
     char *xprv = NULL;
@@ -955,7 +951,7 @@ void routeBip32KeyGetFingerprint(OSCMessage &msg, int addressOffset)
     hexStrFingerprint = toHex(bytes_out, FINGERPRINT_LEN);
     resp_msg.add(hexStrFingerprint.c_str());
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /**
@@ -969,7 +965,6 @@ void routeBip32KeyFromBase58(OSCMessage &msg, int addressOffset)
     int res;
     size_t len;
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/bip32KeyFromBase58");
 
     ext_key decoded_key_root;
@@ -994,5 +989,5 @@ void routeBip32KeyFromBase58(OSCMessage &msg, int addressOffset)
     hexStrPub = toHex(decoded_key_root.pub_key, 33);
     resp_msg.add(hexStrPub.c_str());
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }

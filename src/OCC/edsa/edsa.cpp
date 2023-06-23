@@ -60,13 +60,12 @@ void routeEcdsaPubKey(OSCMessage &msg, int addressOffset)
     pub_key_hex_str = toHex(pub, 33);
 
     // Send the result back
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/ecdsaPubKey");
     resp_msg.add(pub_key_hex_str.c_str());
     resp_msg.add(char_priv_key);
     resp_msg.add((int32_t)len);
 
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
     wally_free_string(char_priv_key);
 }
 
@@ -130,7 +129,6 @@ void routeEcdsaSigFromBytes(OSCMessage
     String sig_hex_str;
     sig_hex_str = toHex(compact, 64);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/ecdsaSigFromBytes");
     resp_msg.add(sig_hex_str
                      .
@@ -143,7 +141,7 @@ void routeEcdsaSigFromBytes(OSCMessage
     resp_msg.add(sig_verify_ok);
     resp_msg.add(char_priv_key);
     resp_msg.add(char_hash_key);
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 
     wally_free_string(char_priv_key);
     wally_free_string(char_hash_key);
@@ -182,12 +180,11 @@ void routeEcdsaSigVerifyPubkeyHash(OSCMessage &msg, int
            fromhex(str_hash),
            32);
     
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/ecdsaSigVerifyPubkeyHash");
     resp_msg.add("PubKey and Hash stored");
     resp_msg.add((int32_t)
                      len);
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
 
 /* Verify a ECDSA signature */
@@ -267,7 +264,6 @@ void routeEcdsaSigVerify(OSCMessage &msg, int addressOffset)
     String hexStr3;
     hexStr3 = toHex(hash_buffer, 32);
 
-    SLIPSerialUtils slipSerialUtils;
     OSCMessage resp_msg("/IHW/ecdsaSigVerify");
     // resp_msg.add((int32_t)res);
     resp_msg.add((int32_t)pub_key_len);
@@ -280,5 +276,5 @@ void routeEcdsaSigVerify(OSCMessage &msg, int addressOffset)
     resp_msg.add(hexStr3.c_str());
     resp_msg.add(hexStr2.c_str());
     resp_msg.add(hexStr.c_str());
-    slipSerialUtils.sendOSCMessage(resp_msg);
+    sendOSCMessage(resp_msg);
 }
