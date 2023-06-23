@@ -3,9 +3,7 @@
 #define OSC_BUNDLE_UTILS_H
 
 #include <OSCBundle.h>
-#include <OSCBoards.h>
 #include <vector>
-#include "wally_bip32.h"
 
 #define FROMHEX_MAXLEN 512
 

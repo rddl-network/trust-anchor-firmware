@@ -1,5 +1,7 @@
 // SLIPSerialUtils.cpp
 #include "SLIPSerialUtils.h"
+#include <OSCBundle.h>
+#include <OSCBoards.h>
 
 // USBCDC SeriSerialESPal(0); // for AI Thinker ESP-C3-32S
 

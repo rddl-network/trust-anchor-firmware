@@ -1,14 +1,8 @@
 #ifndef OCC_CORE_H
 #define OCC_CORE_H
 
-#include <OSCMessage.h> // If needed
-#include <wally_core.h>
-#include <wally_crypto.h>
-#include "wally_address.h"
-#include "wally_symmetric.h"
-
 #include "../SLIPSerialUtils/SLIPSerialUtils.h"
-#include "../../helper/helper.h"
+
 
 void routeWallyInit(OSCMessage &msg, int addressOffset);
 void routeWallyCleanup(OSCMessage &msg, int addressOffset);

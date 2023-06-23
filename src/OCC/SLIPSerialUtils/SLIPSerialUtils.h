@@ -3,9 +3,7 @@
 #define SLIP_SERIAL_UTILS_H
 
 #include <OSCBundle.h>
-#include <OSCBoards.h>
 #include "SLIPEncodedSerial.h"
-#include <Preferences.h>
 
 class SLIPSerialUtils
 {

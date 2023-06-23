@@ -1,11 +1,8 @@
 #ifndef WALLY_BIP39_FUNCTIONS_H
 #define WALLY_BIP39_FUNCTIONS_H
 
-#include "wally_bip32.h"
-#include "wally_bip39.h"
-
 #include "../SLIPSerialUtils/SLIPSerialUtils.h"
-#include "../../helper/helper.h"
+
 
 // Forward declarations for OSCMessage class and other types used.
 class OSCMessage;

@@ -1,12 +1,8 @@
 #ifndef WALLY_CORE_FUNCTIONS_H
 #define WALLY_CORE_FUNCTIONS_H
 
-#include <OSCMessage.h>
-#include <wally_core.h>
-#include "wally_crypto.h"
-
 #include "../SLIPSerialUtils/SLIPSerialUtils.h"
-#include "../../helper/helper.h"
+
 
 void routeWallyEcSigFromBytes(OSCMessage &msg, int addressOffset);
 void routeWallyEcSigNormalize(OSCMessage &msg, int addressOffset);

@@ -1,3 +1,5 @@
+#include "wally_bip32.h"
+
 #include "helper.h"
 
 #define FROMHEX_MAXLEN 512

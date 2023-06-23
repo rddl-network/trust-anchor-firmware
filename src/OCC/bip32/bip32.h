@@ -1,15 +1,9 @@
 #ifndef BIP32_FUNCTIONS_H
 #define BIP32_FUNCTIONS_H
 
-#include <vector>
 #include "wally_bip32.h"
-#include "wally_bip39.h"
-
 #include "../SLIPSerialUtils/SLIPSerialUtils.h"
-#include "../../helper/helper.h"
-#include "../valise/valise.h"
 
-#include <OSCMessage.h>
 
 extern ext_key *hdKey;
 extern char tempBuff[1024];

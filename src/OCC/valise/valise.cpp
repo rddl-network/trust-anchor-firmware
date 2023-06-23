@@ -1,3 +1,9 @@
+#include "secp256k1.h"
+#include "secp256k1_preallocated.h"
+#include "wally_bip32.h"
+#include "wally_bip39.h"
+#include "../../helper/helper.h"
+
 #include "valise.h"
 
 Preferences valise; // ESP32-C3 to use NVS
@@ -252,4 +258,4 @@ void routeValiseCborEcho(OSCMessage &msg, int addressOffset)
     msg2.add(
         "d08355a20101055001010101010101010101010101010101a10458246d65726961646f632e6272616e64796275636b406275636b6c616e642e6578616d706c655820c4af85ac4a5134931993ec0a1863a6e8c66ef4c9ac16315ee6fecd9b2e1c79a1");
     slipSerialUtils.sendOSCMessage(msg2);
-}
+} 

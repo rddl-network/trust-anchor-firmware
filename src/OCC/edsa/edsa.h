@@ -1,13 +1,7 @@
 #ifndef EDSA_FUNCTIONS_H
 #define EDSA_FUNCTIONS_H
 
-#include "secp256k1.h"
-#include "secp256k1_preallocated.h"
 #include "../SLIPSerialUtils/SLIPSerialUtils.h"
-#include "../../helper/helper.h"
-
-#include <OSCMessage.h>
-#include <wally_crypto.h>
 
 extern uint8_t pub_key_buffer[33];
 extern uint8_t hash_buffer[32];

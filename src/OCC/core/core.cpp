@@ -1,3 +1,10 @@
+#include <wally_core.h>
+#include <wally_crypto.h>
+#include "wally_address.h"
+#include "wally_symmetric.h"
+#include "../../helper/helper.h"
+#include "wally_bip32.h"
+
 #include "core.h"
 
 

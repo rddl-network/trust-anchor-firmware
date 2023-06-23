@@ -1,3 +1,8 @@
+#include <wally_crypto.h>
+#include "secp256k1.h"
+#include "secp256k1_preallocated.h"
+#include "../../helper/helper.h"
+
 #include "edsa.h"
 
 uint8_t pub_key_buffer[33];
