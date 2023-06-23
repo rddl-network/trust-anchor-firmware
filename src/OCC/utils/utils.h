@@ -1,6 +1,4 @@
-// SLIPSerialUtils.h
-#ifndef SLIP_SERIAL_UTILS_H
-#define SLIP_SERIAL_UTILS_H
+#pragma once
 
 #include "OSCMessage.h"
 #include "SLIPEncodedSerial.h"
@@ -19,6 +17,3 @@ void tohexprint(char *hexbuf, uint8_t *str, int strlen);
 size_t toHex(const uint8_t *array, size_t arraySize, char *output, size_t outputSize);
 String toHex(const uint8_t *array, size_t arraySize);
 std::vector<uint32_t> getPath(char *pathStr);
-
-
-#endif // SLIP_SERIAL_UTILS_H

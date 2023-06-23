@@ -1,5 +1,4 @@
-#ifndef OCC_CORE_H
-#define OCC_CORE_H
+#pragma once
 
 #include "OSCMessage.h"
 
@@ -16,7 +15,3 @@ void routeWallySymKeyFromSeed(OSCMessage &msg, int addressOffset);
 void routeWallySymKeyFromParent(OSCMessage &msg, int addressOffset);
 void routeEntropy(OSCMessage &msg, int addressOffset);
 void routeTrnd(OSCMessage &msg, int addressOffset);
-
-
-
-#endif // OCC_CORE_H

@@ -1,5 +1,4 @@
-#ifndef VALISE_HEADER_H
-#define VALISE_HEADER_H
+#pragma once
 
 #include "OSCMessage.h"
 
@@ -11,5 +10,3 @@ void routeValiseMnemonicGet(OSCMessage &msg, int addressOffset);
 void routeValiseSeedSet(OSCMessage &msg, int addressOffset);
 void routeValiseSeedGet(OSCMessage &msg, int addressOffset);
 void routeValiseCborEcho(OSCMessage &msg, int addressOffset);
-
-#endif // VALISE_HEADER_H

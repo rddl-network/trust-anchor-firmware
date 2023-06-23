@@ -1,5 +1,4 @@
-#ifndef WALLY_CORE_FUNCTIONS_H
-#define WALLY_CORE_FUNCTIONS_H
+#pragma once
 
 #include "OSCMessage.h"
 
@@ -12,5 +11,3 @@ void routeWallyEcSigVerify2(OSCMessage &msg, int addressOffset);
 void routeWallyEcSigToPublicKey(OSCMessage &msg, int addressOffset);
 void routeWallyFormatBitcoinMessage(OSCMessage &msg, int addressOffset);
 void routeWallyEcdh(OSCMessage &msg, int addressOffset);
-
-#endif // WALLY_CORE_FUNCTIONS_H

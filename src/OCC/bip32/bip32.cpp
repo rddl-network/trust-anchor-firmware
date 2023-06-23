@@ -1,6 +1,7 @@
 #include <vector>
 #include <Preferences.h>
 #include "wally_bip39.h"
+#include "wally_bip32.h"
 #include "../utils/utils.h"
 
 #include "bip32.h"

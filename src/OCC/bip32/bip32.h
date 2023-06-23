@@ -1,7 +1,5 @@
-#ifndef BIP32_FUNCTIONS_H
-#define BIP32_FUNCTIONS_H
+#pragma once
 
-#include "wally_bip32.h"
 #include "OSCMessage.h"
 
 
@@ -17,4 +15,3 @@ void routeBip32KeyStripPriateKey(OSCMessage &msg, int addressOffset);
 void routeBip32KeyGetFingerprint(OSCMessage &msg, int addressOffset);
 void routeBip32KeyFromBase58(OSCMessage &msg, int addressOffset);
 
-#endif // BIP32_FUNCTIONS_H

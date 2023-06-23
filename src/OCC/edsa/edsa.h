@@ -1,5 +1,4 @@
-#ifndef EDSA_FUNCTIONS_H
-#define EDSA_FUNCTIONS_H
+#pragma once
 
 #include "OSCMessage.h"
 
@@ -14,5 +13,3 @@ void routeEcdsaPubKey(OSCMessage &msg, int addressOffset);
 void routeEcdsaSigFromBytes(OSCMessage &msg, int addressOffset);
 void routeEcdsaSigVerifyPubkeyHash(OSCMessage &msg, int addressOffset);
 void routeEcdsaSigVerify(OSCMessage &msg, int addressOffset);
-
-#endif // EDSA_FUNCTIONS_H
