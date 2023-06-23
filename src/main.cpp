@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <OSCBundle.h>
+#include <SLIPEncodedSerial.h>
 
 // Open Crypto Controll imports
 #include "OCC/core/core.h"

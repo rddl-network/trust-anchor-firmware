@@ -1,7 +1,7 @@
 #ifndef WALLY_CORE_FUNCTIONS_H
 #define WALLY_CORE_FUNCTIONS_H
 
-#include "../utils/utils.h"
+#include "OSCMessage.h"
 
 
 void routeWallyEcSigFromBytes(OSCMessage &msg, int addressOffset);

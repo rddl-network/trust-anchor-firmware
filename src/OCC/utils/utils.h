@@ -2,7 +2,7 @@
 #ifndef SLIP_SERIAL_UTILS_H
 #define SLIP_SERIAL_UTILS_H
 
-#include <OSCBundle.h>
+#include "OSCMessage.h"
 #include "SLIPEncodedSerial.h"
 #include <vector>
 

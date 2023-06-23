@@ -1,9 +1,6 @@
 #ifndef WALLY_BIP39_FUNCTIONS_H
 #define WALLY_BIP39_FUNCTIONS_H
 
-#include "../utils/utils.h"
-
-
 // Forward declarations for OSCMessage class and other types used.
 class OSCMessage;
 

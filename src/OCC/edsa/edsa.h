@@ -1,7 +1,7 @@
 #ifndef EDSA_FUNCTIONS_H
 #define EDSA_FUNCTIONS_H
 
-#include "../utils/utils.h"
+#include "OSCMessage.h"
 
 extern uint8_t pub_key_buffer[33];
 extern uint8_t hash_buffer[32];

@@ -1,5 +1,6 @@
 #include <wally_core.h>
 #include "wally_crypto.h"
+#include "../utils/utils.h"
 
 #include "crypto.h"
 

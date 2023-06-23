@@ -2,11 +2,8 @@
 #define BIP32_FUNCTIONS_H
 
 #include "wally_bip32.h"
-#include "../utils/utils.h"
+#include "OSCMessage.h"
 
-
-extern ext_key *hdKey;
-extern char tempBuff[1024];
 
 void routeBip32KeyInit(OSCMessage &msg, int addressOffset);
 void routeBip32KeyFromSeed(OSCMessage &msg, int addressOffset);

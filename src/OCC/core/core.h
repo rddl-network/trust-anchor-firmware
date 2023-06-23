@@ -1,7 +1,7 @@
 #ifndef OCC_CORE_H
 #define OCC_CORE_H
 
-#include "../utils/utils.h"
+#include "OSCMessage.h"
 
 
 void routeWallyInit(OSCMessage &msg, int addressOffset);

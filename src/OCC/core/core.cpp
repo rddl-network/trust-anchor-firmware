@@ -3,6 +3,7 @@
 #include "wally_address.h"
 #include "wally_symmetric.h"
 #include "wally_bip32.h"
+#include "../utils/utils.h"
 
 #include "core.h"
 

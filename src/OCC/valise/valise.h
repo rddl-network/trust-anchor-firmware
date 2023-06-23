@@ -1,7 +1,8 @@
 #ifndef VALISE_HEADER_H
 #define VALISE_HEADER_H
 
-#include "../utils/utils.h"
+#include "OSCMessage.h"
+
 
 void routeValiseSign(OSCMessage &msg, int addressOffset);
 void routeValiseMnemonicSeedInit(OSCMessage &msg, int addressOffset);

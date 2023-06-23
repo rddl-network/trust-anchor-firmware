@@ -3,6 +3,7 @@
 #include "wally_bip32.h"
 #include "wally_bip39.h"
 #include <Preferences.h>
+#include "../utils/utils.h"
 
 #include "valise.h"
 
