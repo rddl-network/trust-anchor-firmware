@@ -1,7 +1,7 @@
 #ifndef EDSA_FUNCTIONS_H
 #define EDSA_FUNCTIONS_H
 
-#include "../SLIPSerialUtils/SLIPSerialUtils.h"
+#include "../utils/utils.h"
 
 extern uint8_t pub_key_buffer[33];
 extern uint8_t hash_buffer[32];

@@ -2,7 +2,7 @@
 #define BIP32_FUNCTIONS_H
 
 #include "wally_bip32.h"
-#include "../SLIPSerialUtils/SLIPSerialUtils.h"
+#include "../utils/utils.h"
 
 
 extern ext_key *hdKey;

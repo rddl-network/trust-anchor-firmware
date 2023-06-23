@@ -1,6 +1,5 @@
 #include "wally_bip32.h"
 #include "wally_bip39.h"
-#include "../../helper/helper.h"
 
 #include "bip39.h"
 

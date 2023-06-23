@@ -1,8 +1,17 @@
+#include "utils.h"
 #include "wally_bip32.h"
 
-#include "helper.h"
-
 #define FROMHEX_MAXLEN 512
+
+// USBCDC SeriSerialESPal(0); // for AI Thinker ESP-C3-32S
+
+void sendOSCMessage(OSCMessage &resp_msg)
+{
+    ESP_SERIAL_BEGIN(); // mark the beginning of the OSC Packet
+    resp_msg.send(ESP_SERIAL);
+    ESP_SERIAL_END();
+    resp_msg.empty();
+}
 
 void memzero(void *const pnt, const size_t len)
 {

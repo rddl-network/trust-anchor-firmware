@@ -1,7 +1,7 @@
 #ifndef OCC_CORE_H
 #define OCC_CORE_H
 
-#include "../SLIPSerialUtils/SLIPSerialUtils.h"
+#include "../utils/utils.h"
 
 
 void routeWallyInit(OSCMessage &msg, int addressOffset);

@@ -1,6 +1,5 @@
 #include <wally_core.h>
 #include "wally_crypto.h"
-#include "../../helper/helper.h"
 
 #include "crypto.h"
 

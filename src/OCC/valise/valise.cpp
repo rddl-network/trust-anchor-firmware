@@ -2,7 +2,6 @@
 #include "secp256k1_preallocated.h"
 #include "wally_bip32.h"
 #include "wally_bip39.h"
-#include "../../helper/helper.h"
 #include <Preferences.h>
 
 #include "valise.h"

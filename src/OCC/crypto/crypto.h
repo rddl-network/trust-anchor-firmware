@@ -1,7 +1,7 @@
 #ifndef WALLY_CORE_FUNCTIONS_H
 #define WALLY_CORE_FUNCTIONS_H
 
-#include "../SLIPSerialUtils/SLIPSerialUtils.h"
+#include "../utils/utils.h"
 
 
 void routeWallyEcSigFromBytes(OSCMessage &msg, int addressOffset);

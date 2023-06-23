@@ -1,7 +1,7 @@
 #ifndef VALISE_HEADER_H
 #define VALISE_HEADER_H
 
-#include "../SLIPSerialUtils/SLIPSerialUtils.h"
+#include "../utils/utils.h"
 
 void routeValiseSign(OSCMessage &msg, int addressOffset);
 void routeValiseMnemonicSeedInit(OSCMessage &msg, int addressOffset);
