@@ -39,6 +39,7 @@ The following libraries are used in this project and are included in the `lib` f
 - OSC: used for communication with the Trusted-anker
 - libwally-embedded: used for liquid-BTC transactions
 - Secp256k1-embedded: used for cryptography
+- seal-edge-apdu: used for communication with se050
 
 ## Contributing
 
