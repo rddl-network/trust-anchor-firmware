@@ -10,7 +10,8 @@ extern "C"{
 }
 
 constexpr int BINARY_RW_SLOT = 224;
-constexpr int BINARY_READ_SIZE = 32;
+constexpr int BINARY_READ_SIZE = 64;
+constexpr int DEFAULT_OVERRIDE_FLAG = 0; // 0: Dont override se050 slot, 1: Override
 
 std::vector<uint8_t> getAESEncrypt(const std::string plainp, const uint8_t* key){
     int plainTextLen = plainp.length()-1;
@@ -28,23 +29,28 @@ std::vector<uint8_t> getAESDecrypt(const std::vector<uint8_t>cipherp, const uint
     std::vector<uint8_t> result(chiperTextLen);
     uint8_t ibuf[16];
 
-    Serial.println(chiperTextLen);
-
     wally_aes(key, 32, cipherp.data(), cipherp.size(), AES_FLAG_DECRYPT, &result[0], cipherp.size());
 
     return result;
 }
 
 
-
+/**
+ * Write AES Encrypted data of given Seed into SE050
+ *
+ * @param string(0) Seed in String type
+ * @param string(1) <optional> Override Flag. 0: Dont write, if there is any data on SE050
+ *                                            1: Write anyway 
+ * @param string(2) <optional> Key in String type
+ * @return Status in string type
+ */
 void routeSE050EncryptData(OSCMessage &msg, int addressOffset) 
 {
     OSCMessage resp_msg("/se050SetSeed");
     std::string key, plainTxt;
     struct sha256 sha;
-    int overrideFlash = 0;
-
-    Serial.println("AES Called");
+    int overrideFlash = DEFAULT_OVERRIDE_FLAG;
+    memset(&sha, 0, sizeof(struct sha256));
  
     if (msg.isString(0))
     {
@@ -54,18 +60,18 @@ void routeSE050EncryptData(OSCMessage &msg, int addressOffset)
         plainTxt.resize(len);
         msg.getString(0, &plainTxt[0], len);
 
-        if (msg.isString(1))
+        if (msg.isInt(1))
         {
-            kyLen = msg.getDataLength(1);
-            key.resize(kyLen);
-            msg.getString(1, &key[0], kyLen);
-
-            sha256(&sha, fromhex(key.data()), (key.size()-1)/2);
+           overrideFlash = msg.getInt(1);
         }
 
-        if (msg.isInt(2))
+        if (msg.isString(2))
         {
-           overrideFlash = msg.getInt(2);
+            kyLen = msg.getDataLength(2);
+            key.resize(kyLen);
+            msg.getString(2, &key[0], kyLen);
+
+            sha256(&sha, fromhex(key.data()), (key.size()-1)/2);
         }
 
         if(overrideFlash != 0)
@@ -83,29 +89,36 @@ void routeSE050EncryptData(OSCMessage &msg, int addressOffset)
 }
 
 
-
+/**
+ * Read Seed from SE050. 
+ * Always read BINARY_READ_SIZE bytes from se050.
+ * 
+ * @param string(0) <optional> Key in String type
+ * @return Seed in string type
+ */
 void routeSE050DecryptData(OSCMessage &msg, int addressOffset) 
 {
     OSCMessage resp_msg("/se050GetSeed");
     std::string key;
     struct sha256 sha;
+    memset(&sha, 0, sizeof(struct sha256));
 
-     if (msg.isString(0))
+    if (msg.isString(0))
     {
         int kyLen = msg.getDataLength(0);
         key.resize(kyLen);
         msg.getString(0, &key[0], kyLen);
 
         sha256(&sha, fromhex(key.data()), (key.size()-1)/2);
-
-        auto cipherp = se050_obj.read_binary_data(BINARY_RW_SLOT, BINARY_READ_SIZE);
-
-        auto plainArr = getAESDecrypt(cipherp, sha.u.u8);
-
-        String hexStr;
-        hexStr = toHex(plainArr.data(), plainArr.size());
-        resp_msg.add(hexStr.c_str());
     }
+
+    auto cipherp = se050_obj.read_binary_data(BINARY_RW_SLOT, BINARY_READ_SIZE);
+
+    auto plainArr = getAESDecrypt(cipherp, sha.u.u8);
+
+    String hexStr;
+    hexStr = toHex(plainArr.data(), plainArr.size());
+    resp_msg.add(hexStr.c_str());
 
     sendOSCMessage(resp_msg);
 }
