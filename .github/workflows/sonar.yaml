@@ -86,6 +86,7 @@ jobs:
         run: |
           build-wrapper-linux-x86-64 --out-dir sonarqube-out \
             platformio ci --build-dir="./bin" --keep-build-dir --project-conf=platformio.ini ./src/main.cpp \
+            --lib="./src/" --lib="./lib/se050/" \
             --lib="./lib/secp256k1-embedded/" --lib="./lib/OSC/" --lib="./lib/libwally-embedded/"
           # Hack - point sonarqube to the real sources not the copy of it
           # See also https://community.sonarsource.com/t/scanning-platformio-c-embeded-projects/35141/2
