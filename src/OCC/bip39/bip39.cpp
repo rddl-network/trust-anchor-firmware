@@ -220,6 +220,8 @@ void routeBip39Mnemonic(OSCMessage &msg, int addressOffset)
     res = bip39_mnemonic_from_bytes(NULL, se_rnd, sizeof(se_rnd), &phrase);
     msg.add(phrase);
     sendOSCMessage(msg);
+
+    wally_free_string(phrase);
 }
 
 void routeBip39MnemonicToBytes(OSCMessage &msg, int addressOffset)
@@ -266,6 +268,8 @@ void routeBip39MnemonicFromBytes(OSCMessage &msg, int addressOffset)
     OSCMessage resp_msg("/Bip39MnemonicFromBytes");
     resp_msg.add(phrase);
     sendOSCMessage(resp_msg);
+
+    wally_free_string(phrase);
 }
 
 void routeBip39MnemonicToPrivateKey(OSCMessage &msg, int addressOffset)
@@ -300,4 +304,6 @@ void routeBip39MnemonicToPrivateKey(OSCMessage &msg, int addressOffset)
     resp_msg.add(hexStr.c_str());
     resp_msg.add(base58_master_key);
     sendOSCMessage(resp_msg);
+
+    wally_free_string(base58_master_key);
 }
