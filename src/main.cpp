@@ -45,7 +45,7 @@ void setup()
     SerialESP.setTxBufferSize(1024);
 
     #ifdef DSE050
-        se050_obj.init_interface(5, 6);
+        se050_obj.init_interface(6, 7);
     #endif
 }
 
