@@ -1,5 +1,7 @@
 #include "wally_bip32.h"
 #include "wally_bip39.h"
+#include "wally_crypto.h"
+#include "wally_address.h"
 #include "../utils/utils.h"
 
 #include "bip39.h"
@@ -10,6 +12,8 @@
 
 // root HD key
 ext_key root;
+
+char* password = "Nato.0+55+3d";
 
 /**
  * Get all te languages available to create mnemonic phrases
@@ -170,7 +174,7 @@ void routeBip39MnemonicToSeed(OSCMessage &msg, int addressOffset)
 
         // converting recovery phrase to bytes
         // we have to consider which default passphrase we are going to use.
-        res = bip39_mnemonic_to_seed(phrase, "trustanchor", bytes_out, sizeof(bytes_out), &len);
+        res = bip39_mnemonic_to_seed(phrase, password, bytes_out, sizeof(bytes_out), &len);
         // res = bip39_mnemonic_to_bytes(NULL, phrase, bytes_out, sizeof(bytes_out), &len);
     }
 
@@ -196,7 +200,7 @@ void routeBip39MnemonicToSeed512(OSCMessage &msg, int addressOffset)
 
         // converting recovery phrase to bytes
         // we have to consider which default passphrase we are going to use.
-        res = bip39_mnemonic_to_seed(phrase, "trustanchor", bytes_out, sizeof(bytes_out), &len);
+        res = bip39_mnemonic_to_seed(phrase, password, bytes_out, sizeof(bytes_out), &len);
         // res = bip39_mnemonic_to_bytes(NULL, phrase, bytes_out, sizeof(bytes_out), &len);
     }
 
@@ -272,13 +276,11 @@ void routeBip39MnemonicFromBytes(OSCMessage &msg, int addressOffset)
     wally_free_string(phrase);
 }
 
-void routeBip39MnemonicToPrivateKey(OSCMessage &msg, int addressOffset)
-{
+void routeBip39MnemonicToPrivateKey(OSCMessage &msg, int addressOffset) {
     int res;
 
     char phrase[512];
-    if (msg.isString(0))
-    {
+    if (msg.isString(0)) {
         int length = msg.getDataLength(0);
         msg.getString(0, phrase, length);
     }
@@ -286,9 +288,9 @@ void routeBip39MnemonicToPrivateKey(OSCMessage &msg, int addressOffset)
     // Convert mnemonic to seed
     uint8_t seed[BIP39_SEED_LEN_512];
     size_t seed_len;
-    res = bip39_mnemonic_to_seed(phrase, "my password", seed, sizeof(seed), &seed_len);
+    res = bip39_mnemonic_to_seed(phrase, password, seed, sizeof(seed), &seed_len);
     // Generate BIP32 master key from seed
-    res = bip32_key_from_seed(seed, sizeof(seed), BIP32_VER_MAIN_PRIVATE, 0, &root);
+    res = bip32_key_from_seed(seed, sizeof(seed), BIP32_VER_TEST_PRIVATE, 0, &root);
 
     // // Clear seed from memory for security
     memset(seed, 0, sizeof(seed_len));
@@ -299,11 +301,26 @@ void routeBip39MnemonicToPrivateKey(OSCMessage &msg, int addressOffset)
 
     String hexStr;
     hexStr = toHex(root.priv_key, 33);
+
+    char *wif;
+    wally_wif_from_bytes (root.priv_key, 
+                          EC_PRIVATE_KEY_LEN, 
+                          WALLY_ADDRESS_VERSION_WIF_TESTNET, 
+                          WALLY_WIF_FLAG_COMPRESSED, 
+                          &wif);
+
+    
+
     // Send the result back
-    OSCMessage resp_msg("/IHW/BipMnemonicToPrivateKey");
+    OSCMessage resp_msg("/IHW/Bip39MnemonicToPrivateKey");
     resp_msg.add(hexStr.c_str());
     resp_msg.add(base58_master_key);
-    sendOSCMessage(resp_msg);
+    resp_msg.add(wif);
+
+    SLIPSerial.beginPacket();
+    resp_msg.send(SLIPSerial);
+    SLIPSerial.endPacket();
+    resp_msg.empty();
 
     wally_free_string(base58_master_key);
 }
