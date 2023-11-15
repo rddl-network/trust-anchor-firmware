@@ -1,6 +1,6 @@
 # trusted_anker_platformio
 
-This repository contains the necessary files to deploy the stack for the trusted-anker platform using the CPU ESP-G3-32S. The boards folder contains custom firmware for the rddl board and the lib folder contains the required libraries for communication with the Trusted-anker, liquid-BTC transactions, and cryptography.
+This repository contains the necessary files to deploy the stack for the trusted-anker platform using the CPU ESP32-C3. The boards folder contains custom firmware for the rddl board and the lib folder contains the required libraries for communication with the Trusted-anker, liquid-BTC transactions, and cryptography.
 
 ## Requirements
 
