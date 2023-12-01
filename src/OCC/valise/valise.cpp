@@ -111,14 +111,11 @@ void routeValiseSign(OSCMessage &msg, int addressOffset)
 
 void routeValiseMnemonicSeedInit(OSCMessage &msg, int addressOffset)
 {
-    /* mnemonic stays unknown
-       has to init menmonic and has to init seed
-       cause, the seed is rquired for almost all bip32 calls
-    */
-    Preferences valise; // ESP32-C3 to use NVS
+    Preferences valise;
     int res;
     size_t len;
     uint8_t bytes_out[BIP39_SEED_LEN_512];
+    struct ext_key root;
 
     valise.begin("vault", false);
     const char *mnemonic = "focus nature unfair swap kingdom supply weather piano fine just brief maximum federal nature goat cash crystal rally response joy unique drum merit surprise";
@@ -126,14 +123,25 @@ void routeValiseMnemonicSeedInit(OSCMessage &msg, int addressOffset)
     valise.end();
 
     valise.begin("vault", false);
-    // converting recovery phrase to bytes
-    // we have to consider which default passphrase we are going to use.
+    // Convert mnemonic to seed
     res = bip39_mnemonic_to_seed(mnemonic, "trustanchor", bytes_out, sizeof(bytes_out), &len);
     valise.putString("valise_seed", (const char *)bytes_out);
+
+    // Derive BIP32 root key from seed
+    res = bip32_key_from_seed(bytes_out, len, BIP32_VER_MAIN_PRIVATE, 0, &root);
+
+    // Serialize root key to base58 string
+    char *serialized_root;
+    res = bip32_key_to_base58(&root, BIP32_FLAG_KEY_PRIVATE, &serialized_root);
+    if (res == WALLY_OK) {
+        valise.putString("valise_root_key", serialized_root);
+        wally_free_string(serialized_root);
+    }
+
     valise.end();
 
     OSCMessage resp_msg("/valiseMnemonicSeedInit");
-    resp_msg.add("1");
+    resp_msg.add(res == WALLY_OK ? "1" : "0");
     sendOSCMessage(resp_msg);
 }
 
@@ -256,3 +264,53 @@ void routeValiseCborEcho(OSCMessage &msg, int addressOffset)
         "d08355a20101055001010101010101010101010101010101a10458246d65726961646f632e6272616e64796275636b406275636b6c616e642e6578616d706c655820c4af85ac4a5134931993ec0a1863a6e8c66ef4c9ac16315ee6fecd9b2e1c79a1");
     sendOSCMessage(msg2);
 } 
+
+/**
+ * Store the address family inside the device's memory
+ *
+ * @param String(0) The address family, either "tb" for testbtc or "bc" for btc.
+ * @return Generated '0' or '1' string for failure or success. Sending over OSC as string
+ */
+void routeValiseAddrFamily(OSCMessage &msg, int addressOffset)
+{
+    Preferences valise;
+    if (msg.isString(0))
+    {
+        int length = msg.getDataLength(0);
+        char addrFamily[length];
+        msg.getString(0, addrFamily, length);
+
+        // Validate address family
+        if (strcmp(addrFamily, "tb") == 0 || strcmp(addrFamily, "bc") == 0) {
+            valise.begin("vault", false);
+            valise.putString("addr_family", addrFamily);
+            valise.end();
+
+            OSCMessage resp_msg("/valiseAddrFamilySet");
+            resp_msg.add("1"); // Success
+            sendOSCMessage(resp_msg);
+        } else {
+            // Invalid address family
+            OSCMessage resp_msg("/valiseAddrFamilyError");
+            resp_msg.add("0"); // Failure
+            sendOSCMessage(resp_msg);
+        }
+    }
+}
+
+/**
+ * Retrieve the address family from the device's memory
+ *
+ * @return The stored address family. Sending over OSC as string
+ */
+void routeValiseAddrFamilyGet(OSCMessage &msg, int addressOffset)
+{
+    Preferences valise;
+    valise.begin("vault", false);
+    String addrFamily = valise.getString("addr_family", "bc"); // Default to "bc" if not set
+    valise.end();
+
+    OSCMessage resp_msg("/valiseAddrFamilyGet");
+    resp_msg.add(addrFamily.c_str());
+    sendOSCMessage(resp_msg);
+}

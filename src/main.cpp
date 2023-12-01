@@ -96,6 +96,8 @@ void loop()
         msg.route("/IHW/valiseSeedSet", routeValiseSeedSet);
         msg.route("/IHW/valiseSeedGet", routeValiseSeedGet);
         msg.route("/IHW/valiseSign", routeValiseSign);
+        msg.route("/IHW/valiseAddrFamilyGet", routeValiseAddrFamilyGet);
+        msg.route("/IHW/valiseAddrFamily", routeValiseAddrFamily);
 
         /* Bip39 functions*/
         msg.route("/IHW/bip39GetLanguages", routeBip39GetLanguages);
