@@ -1,6 +1,6 @@
-# trusted_anker_platformio
+# trust_anker_platformio
 
-This repository contains the necessary files to deploy the stack for the trusted-anker platform using the CPU ESP32-C3. The boards folder contains custom firmware for the rddl board and the lib folder contains the required libraries for communication with the Trusted-anker, liquid-BTC transactions, and cryptography.
+This repository contains the necessary files to deploy the stack for the trust-anker platform using the CPU ESP32-C3. The boards folder contains custom firmware for the rddl board and the lib folder contains the required libraries for communication with the trust-anker, liquid-BTC transactions, and cryptography.
 
 ## Requirements
 
@@ -36,7 +36,7 @@ This will open the serial monitor, where you can see the output of the applicati
 
 The following libraries are used in this project and are included in the `lib` folder:
 
-- OSC: used for communication with the Trusted-anker
+- OSC: used for communication with the trust-anker
 - libwally-embedded: used for liquid-BTC transactions
 - Secp256k1-embedded: used for cryptography
 - seal-edge-apdu: used for communication with se050
