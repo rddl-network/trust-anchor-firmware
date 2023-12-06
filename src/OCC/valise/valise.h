@@ -10,3 +10,5 @@ void routeValiseMnemonicGet(OSCMessage &msg, int addressOffset);
 void routeValiseSeedSet(OSCMessage &msg, int addressOffset);
 void routeValiseSeedGet(OSCMessage &msg, int addressOffset);
 void routeValiseCborEcho(OSCMessage &msg, int addressOffset);
+void routeValiseAddrFamilyGet(OSCMessage &msg, int addressOffset);
+void routeValiseAddrFamily(OSCMessage &msg, int addressOffset);

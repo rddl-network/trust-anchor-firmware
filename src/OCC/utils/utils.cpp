@@ -145,3 +145,15 @@ std::vector<uint32_t> getPath(char *pathStr)
     }
     return myPath;
 }
+
+/**
+ * Sends an error message using OSC protocol.
+ *
+ * @param message The error message to send.
+ */
+void sendErrorMessage(OSCMessage &msg, const char *message) {
+    OSCMessage resp_msg("/IHW/wallyBip32KeyToAddress");
+    resp_msg.add("Error: ");
+    resp_msg.add(message);
+    sendOSCMessage(resp_msg);
+}

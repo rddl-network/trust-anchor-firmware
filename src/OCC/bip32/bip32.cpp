@@ -279,176 +279,61 @@ void routeBip32KeyFromSeed(OSCMessage &msg, int addressOffset)
  */
 void routeBip32KeyFromParent(OSCMessage &msg, int addressOffset)
 {
-    Preferences valise; // ESP32-C3 to use NVS
+    Preferences valise;
     int res;
-    size_t len;
+    struct ext_key root, child_key;
     OSCMessage resp_msg("/bip32KeyfromParent");
 
     char *xprv = NULL;
     char *xpub = NULL;
-    uint8_t seed[BIP39_SEED_LEN_512];
 
-    int version = BIP32_VER_MAIN_PRIVATE;
-    int flag = BIP32_FLAG_KEY_PRIVATE;
+    valise.begin("vault", false);
+    String serialized_root = valise.getString("valise_root_key", "");
+    valise.end();
 
-    if (msg.isString(0))
-    {
-        // Get seed
-        int lengthSeed = msg.getDataLength(0);
-        char hexStrSeed[lengthSeed];
-        msg.getString(0, hexStrSeed, lengthSeed);
-
-        if (lengthSeed != 0)
-        {
-            memcpy(seed,
-                   fromhex(hexStrSeed),
-                   BIP39_SEED_LEN_512);
-        }
-        else
-        {
-            valise.begin("vault", false);
-            String valise_seed = valise.getString("valise_seed", "");
-            valise.end();
-
-            memcpy(
-                seed,
-                fromhex((const char *)valise_seed.c_str()),
-                64);
-        }
-
-        // Get child number
-        size_t childNum = 0;
-        // int childHardened = 1;
-        if (msg.isInt(1))
-        {
-            if (msg.getInt(2) == 1)
-            {
-                childNum = msg.getInt(1) + BIP32_INITIAL_HARDENED_CHILD;
-            }
-            else
-            {
-                childNum = msg.getInt(1);
-            }
-        }
-
-        // Get network version number
-        if (msg.isInt(3))
-        {
-            switch (msg.getInt(3))
-            {
-            case 0:
-                version = BIP32_VER_MAIN_PRIVATE;
-                break;
-
-            case 1:
-                version = BIP32_VER_TEST_PRIVATE;
-                break;
-
-            default:
-                version = BIP32_VER_MAIN_PRIVATE;
-                break;
-            }
-        }
-
-        // Get key type flag
-        if (msg.isInt(4))
-        {
-            switch (msg.getInt(4))
-            {
-            case 0:
-                flag = BIP32_FLAG_KEY_PRIVATE;
-                break;
-
-            case 1:
-                flag = BIP32_FLAG_KEY_PUBLIC;
-                break;
-
-            default:
-                flag = BIP32_FLAG_KEY_PRIVATE;
-                break;
-            }
-        }
-
-        ext_key derived_key_root;
-        ext_key child_key_root;
-
-        res = bip32_key_from_seed(seed, BIP32_ENTROPY_LEN_512, version, 0, &derived_key_root);
-        res = bip32_key_from_parent(&derived_key_root, childNum, BIP32_FLAG_KEY_PRIVATE, &child_key_root);
-        res = bip32_key_to_base58(&child_key_root, BIP32_FLAG_KEY_PRIVATE, &xprv);
-        res = bip32_key_to_base58(&child_key_root, BIP32_FLAG_KEY_PUBLIC, &xpub);
-
-        if (flag == 0)
-        {
-            String hexStr;
-            hexStr = toHex(child_key_root.priv_key, 33);
-            resp_msg.add(hexStr.c_str());
-            resp_msg.add(xprv);
-        }
-        else
-        {
-            String hexStr;
-            hexStr = toHex(child_key_root.pub_key, 33);
-            resp_msg.add(hexStr.c_str());
-            resp_msg.add(xpub);
-        }
-    }
-
-    // bip32_key_free(pk);
-
-    sendOSCMessage(resp_msg);
-}
-
-void routeBip32KeyFromParent2(OSCMessage &msg, int addressOffset)
-{
-    int res;
-
-    char char_priv_key[65]; // has to be inside the msg.isString() check ...
-
-    if (msg.isString(0))
-    {
-        int length = msg.getDataLength(0);
-        msg.getString(0, char_priv_key, length);
-    }
-
-    ext_key parent_key;
-    memcpy(parent_key.priv_key,
-           fromhex(char_priv_key),
-           32);
-
-    uint32_t child_index = msg.getInt(2);
-
-    // Derive child key from parent key
-    ext_key child_ext_key;
-    res = bip32_key_from_parent(&parent_key, child_index, BIP32_FLAG_KEY_PUBLIC, &child_ext_key);
-    if (res != WALLY_OK)
-    {
-        // Handle the error
-        Serial.println("Error: Failed to derive child key from parent key");
+    if (serialized_root.length() == 0) {
+        sendErrorMessage(resp_msg, "HD key not found in NVS");
         return;
     }
 
-    // Convert child_ext_key to base58 string
-    char *base58_child_key = NULL;
-    res = bip32_key_to_base58(&child_ext_key, BIP32_FLAG_KEY_PUBLIC, &base58_child_key);
-    if (res != WALLY_OK)
-    {
-        // Handle the error
-        Serial.println("Error: Failed to convert child key to base58");
+    // Deserialize the HD key
+    res = bip32_key_from_base58(serialized_root.c_str(), &root);
+    if (res != WALLY_OK) {
+        sendErrorMessage(resp_msg, "Failed to deserialize HD key");
         return;
     }
 
-    String hexStr;
-    hexStr = toHex(child_ext_key.pub_key, 33);
+    // Get child number and type
+    uint32_t childNum = 0;
+    uint32_t flag = BIP32_FLAG_KEY_PRIVATE;
+    if (msg.isInt(1)) {
+        childNum = msg.getInt(1) | (msg.isInt(2) && msg.getInt(2) == 1 ? BIP32_INITIAL_HARDENED_CHILD : 0);
+        flag = msg.isInt(4) && msg.getInt(4) == 1 ? BIP32_FLAG_KEY_PUBLIC : BIP32_FLAG_KEY_PRIVATE;
+    }
 
-    // Send the result back
-    OSCMessage resp_msg("/IHW/bip32KeyFromParent");
-    resp_msg.add(hexStr.c_str());
-    resp_msg.add(base58_child_key);
-    resp_msg.add((int32_t)child_index);
+    // Derive child key
+    res = bip32_key_from_parent(&root, childNum, flag, &child_key);
+    if (res != WALLY_OK) {
+        sendErrorMessage(resp_msg, "Failed to derive child key");
+        return;
+    }
+
+    // Serialize the child key
+    res = bip32_key_to_base58(&child_key, flag, &xprv);
+    if (res != WALLY_OK) {
+        sendErrorMessage(resp_msg, "Failed to serialize child key");
+        return;
+    }
+
+    // Add serialized key to response
+    resp_msg.add(flag == BIP32_FLAG_KEY_PRIVATE ? xprv : xpub);
+
     sendOSCMessage(resp_msg);
 
-    wally_free_string(base58_child_key);
+    wally_free_string(xprv);
+    wally_free_string(xpub);
 }
+
 
 /**
  * Convert key to base58 data
@@ -459,54 +344,44 @@ void routeBip32KeyFromParent2(OSCMessage &msg, int addressOffset)
  */
 void routeBip32KeyToBase58(OSCMessage &msg, int addressOffset)
 {
+    Preferences valise;
     int res;
-    size_t len;
+    struct ext_key root;
     OSCMessage resp_msg("/bip32KeytoBase58");
 
-    if (msg.isString(0))
-    {
-        // Get seed
-        size_t len = msg.getDataLength(0);
-        char key[len];
-        msg.getString(0, key, len);
+    // Retrieve the serialized HD key from NVS
+    valise.begin("vault", false);
+    String serialized_root = valise.getString("valise_root_key", "");
+    valise.end();
 
-        /* Check if the user *indicate flag */
-        int flag = BIP32_FLAG_KEY_PRIVATE;
-        if (msg.isInt(1))
-        {
-            switch (msg.getInt(1))
-            {
-            case 0:
-                flag = BIP32_FLAG_KEY_PRIVATE;
-                break;
-
-            case 1:
-                flag = BIP32_FLAG_KEY_PUBLIC;
-                break;
-
-            case 2:
-                flag = BIP32_FLAG_SKIP_HASH;
-                break;
-
-            case 4:
-                flag = BIP32_FLAG_KEY_TWEAK_SUM;
-                break;
-
-            default:
-                flag = BIP32_VER_MAIN_PRIVATE;
-                break;
-            }
-        }
-
-        char *xprv = NULL;
-        res = bip32_key_to_base58((ext_key *)fromhex(key), flag, &xprv);
-
-        resp_msg.add(xprv);
-
-        wally_free_string(xprv);
+    if (serialized_root.length() == 0) {
+        resp_msg.add("Error: HD key not found in NVS");
+        sendOSCMessage(resp_msg);
+        return;
     }
-    else
-        resp_msg.add("ERROR! Couldnt get key");
+
+    // Deserialize the HD key
+    res = bip32_key_from_base58(serialized_root.c_str(), &root);
+    if (res != WALLY_OK) {
+        resp_msg.add("Error: Failed to deserialize HD key");
+        sendOSCMessage(resp_msg);
+        return;
+    }
+
+    // Check the flag
+    uint32_t flag = BIP32_FLAG_KEY_PRIVATE;
+    if (msg.isInt(1)) {
+        flag = msg.getInt(1);
+    }
+
+    char *base58_key = NULL;
+    res = bip32_key_to_base58(&root, flag, &base58_key);
+    if (res != WALLY_OK) {
+        resp_msg.add("Error: Failed to serialize HD key to Base58");
+    } else {
+        resp_msg.add(base58_key);
+        wally_free_string(base58_key);
+    }
 
     sendOSCMessage(resp_msg);
 }
@@ -525,123 +400,62 @@ void routeBip32KeyFromParentPathString(OSCMessage &msg, int addressOffset)
 {
     Preferences valise;
     int res;
-    size_t len;
-
+    struct ext_key root, child_key;
     OSCMessage resp_msg("/bip32KeyFromParentPathString");
 
     char *xprv = NULL;
     char *xpub = NULL;
-    uint8_t seed[BIP39_SEED_LEN_512];
 
-    int version = BIP32_VER_MAIN_PRIVATE;
-    int flag = BIP32_FLAG_KEY_PRIVATE;
+    valise.begin("vault", false);
+    String serialized_root = valise.getString("valise_root_key", "");
+    String addrFamily = valise.getString("addr_family", "bc");
+    valise.end();
 
-    // Get seed
-    if (msg.isString(0)) // logical 'AND' for msg.isString(0) and msg.isString(1)
-    {
-        int lengthSeed = msg.getDataLength(0);
-        char hexStrSeed[lengthSeed];
-        msg.getString(0, hexStrSeed, lengthSeed);
-        if (lengthSeed != 0)
-        {
-            memcpy(seed,
-                   fromhex(hexStrSeed),
-                   BIP39_SEED_LEN_512);
-        }
-        else
-        {
-            valise.begin("vault", false);
-            String valise_seed = valise.getString("valise_seed", "");
-            valise.end();
+    if (serialized_root.length() == 0) {
+        resp_msg.add("Error: HD key not found in NVS");
+        sendOSCMessage(resp_msg);
+        return;
+    }
 
-            memcpy(
-                seed,
-                fromhex((const char *)valise_seed.c_str()),
-                64);
-        }
+    // Deserialize the HD key
+    res = bip32_key_from_base58(serialized_root.c_str(), &root);
+    if (res != WALLY_OK) {
+        resp_msg.add("Error: Failed to deserialize HD key");
+        sendOSCMessage(resp_msg);
+        return;
     }
 
     // Get Path
     std::vector<uint32_t> childPath;
     if (msg.isString(1))
     {
-        len = msg.getDataLength(1);
+        size_t len = msg.getDataLength(1);
         char pathString[len];
         msg.getString(1, pathString, len);
         childPath = getPath(pathString);
     }
 
-    // Get network version number
-    if (msg.isInt(3))
-    {
-        switch (msg.getInt(3))
-        {
-        case 0:
-            version = BIP32_VER_MAIN_PRIVATE;
-            break;
+    // Determine network version number
+    uint32_t version = (addrFamily == "tb") ? BIP32_VER_TEST_PRIVATE : BIP32_VER_MAIN_PRIVATE;
 
-        case 1:
-            version = BIP32_VER_TEST_PRIVATE;
-            break;
-
-        default:
-            version = BIP32_VER_MAIN_PRIVATE;
-            break;
-        }
+    // Derive child key
+    res = bip32_key_from_parent_path(&root, childPath.data(), childPath.size(), BIP32_FLAG_KEY_PRIVATE, &child_key);
+    if (res != WALLY_OK) {
+        resp_msg.add("Error: Failed to derive child key");
+        sendOSCMessage(resp_msg);
+        return;
     }
 
-    // Get key type flag
-    if (msg.isInt(4))
-    {
-        switch (msg.getInt(4))
-        {
-        case 0:
-            flag = BIP32_FLAG_KEY_PRIVATE;
-            break;
+    // Serialize the child key
+    res = bip32_key_to_base58(&child_key, BIP32_FLAG_KEY_PRIVATE, &xprv);
+    res = bip32_key_to_base58(&child_key, BIP32_FLAG_KEY_PUBLIC, &xpub);
 
-        case 1:
-            flag = BIP32_FLAG_KEY_PUBLIC;
-            break;
+    // Add serialized key to response
+    resp_msg.add(xprv);
+    resp_msg.add(xpub);
 
-        default:
-            flag = BIP32_FLAG_KEY_PRIVATE;
-            break;
-        }
-    }
-
-    ext_key derived_key_root;
-    ext_key child_key_root;
-
-    res = bip32_key_from_seed(seed, BIP32_ENTROPY_LEN_512, version, 0, &derived_key_root);
-
-    res = bip32_key_from_parent_path(&derived_key_root, childPath.data(), childPath.size(), BIP32_FLAG_KEY_PRIVATE,
-                                     &child_key_root);
-
-    res = bip32_key_to_base58(&child_key_root, BIP32_FLAG_KEY_PRIVATE, &xprv);
-    res = bip32_key_to_base58(&child_key_root, BIP32_FLAG_KEY_PUBLIC, &xpub);
-
-    if (flag == 0)
-    {
-        String hexStr;
-        hexStr = toHex(child_key_root.priv_key, 33);
-        resp_msg.add(hexStr.c_str());
-        resp_msg.add(xprv);
-    }
-    else
-    {
-        String hexStr;
-        hexStr = toHex(child_key_root.pub_key, 33);
-        resp_msg.add(hexStr.c_str());
-        resp_msg.add(xpub);
-    }
-
-    /*
-    derive_key_out = ext_key ( )
-    # ret = bip32_key_from_parent ( master, x, FLAG_KEY_PRIVATE, derive_key_out)
-    ret = bip32_key_from_parent_path_str_n(master, 'm/0h/0h/'+str(x)+'h', len('m/0h/0h/'+str(x)+'h'), 0, FLAG_KEY_PRIVATE, derive_key_out)
-    _,wif = wally_wif_from_bytes ( derive_key_out.priv_key, 32, 0xef, 0)
-    derived_keys.append(wif)
-    */
+    wally_free_string(xprv);
+    wally_free_string(xpub);
 
     sendOSCMessage(resp_msg);
 }
@@ -660,102 +474,53 @@ void routeBip32KeySerialize(OSCMessage &msg, int addressOffset)
 {
     Preferences valise;
     int res;
-    size_t len;
+    struct ext_key root;
+    ext_key child_key;
     OSCMessage resp_msg("/bip32KeySerialize");
 
-    char *xprv = NULL;
-    char *xpub = NULL;
-    uint8_t seed[BIP39_SEED_LEN_512];
+    // Retrieve the serialized HD key from NVS
+    valise.begin("vault", false);
+    String serialized_root = valise.getString("valise_root_key", "");
+    valise.end();
 
-    int version = BIP32_VER_MAIN_PRIVATE;
-    int flag = BIP32_FLAG_KEY_PRIVATE;
-
-    // Get seed
-    if (msg.isString(0)) // logical 'AND' for msg.isString(0) and msg.isString(1)
-    {
-        int lengthSeed = msg.getDataLength(0);
-        char hexStrSeed[lengthSeed];
-        msg.getString(0, hexStrSeed, lengthSeed);
-        if (lengthSeed != 0)
-        {
-            memcpy(seed,
-                   fromhex(hexStrSeed),
-                   BIP39_SEED_LEN_512);
-        }
-        else
-        {
-            valise.begin("vault", false);
-            String valise_seed = valise.getString("valise_seed", "");
-            valise.end();
-
-            memcpy(
-                seed,
-                fromhex((const char *)valise_seed.c_str()),
-                64);
-        }
+    if (serialized_root.length() == 0) {
+        sendErrorMessage(resp_msg, "HD key not found in NVS");
+        return;
     }
 
-    // Get Path
+    // Deserialize the HD key
+    res = bip32_key_from_base58(serialized_root.c_str(), &root);
+    if (res != WALLY_OK) {
+        sendErrorMessage(resp_msg, "Failed to deserialize HD key");
+        return;
+    }
+
+    // Parse derivation path
     std::vector<uint32_t> childPath;
     if (msg.isString(1))
     {
-        len = msg.getDataLength(1);
+        size_t len = msg.getDataLength(1);
         char pathString[len];
         msg.getString(1, pathString, len);
         childPath = getPath(pathString);
     }
 
-    // Get network version number
-    if (msg.isInt(3))
-    {
-        switch (msg.getInt(3))
-        {
-        case 0:
-            version = BIP32_VER_MAIN_PRIVATE;
-            break;
-
-        case 1:
-            version = BIP32_VER_TEST_PRIVATE;
-            break;
-
-        default:
-            version = BIP32_VER_MAIN_PRIVATE;
-            break;
-        }
+    // Derive child key
+    res = bip32_key_from_parent_path(&root, childPath.data(), childPath.size(), BIP32_FLAG_KEY_PRIVATE, &child_key);
+    if (res != WALLY_OK) {
+        sendErrorMessage(resp_msg, "Failed to derive child key");
+        return;
     }
 
-    // Get key type flag
-    if (msg.isInt(4))
-    {
-        switch (msg.getInt(4))
-        {
-        case 0:
-            flag = BIP32_FLAG_KEY_PRIVATE;
-            break;
-
-        case 1:
-            flag = BIP32_FLAG_KEY_PUBLIC;
-            break;
-
-        default:
-            flag = BIP32_FLAG_KEY_PRIVATE;
-            break;
-        }
+    // Serialize the derived child key
+    uint8_t serialized_child[BIP32_SERIALIZED_LEN];
+    res = bip32_key_serialize(&child_key, BIP32_FLAG_KEY_PRIVATE, serialized_child, sizeof(serialized_child));
+    if (res != WALLY_OK) {
+        sendErrorMessage(resp_msg, "Failed to serialize child key");
+        return;
     }
 
-    ext_key derived_key_root;
-    ext_key child_key_root;
-
-    res = bip32_key_from_seed(seed, BIP32_ENTROPY_LEN_512, version, 0, &derived_key_root);
-
-    res = bip32_key_from_parent_path(&derived_key_root, childPath.data(), childPath.size(), BIP32_FLAG_KEY_PRIVATE,
-                                     &child_key_root);
-
-    uint8_t bytes_out[BIP32_SERIALIZED_LEN];
-    res = bip32_key_serialize(&child_key_root, flag, bytes_out, BIP32_SERIALIZED_LEN);
-
-    String hexStr;
-    hexStr = toHex(bytes_out, BIP32_SERIALIZED_LEN);
+    String hexStr = toHex(serialized_child, sizeof(serialized_child));
     resp_msg.add(hexStr.c_str());
 
     sendOSCMessage(resp_msg);

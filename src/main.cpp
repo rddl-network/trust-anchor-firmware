@@ -9,6 +9,7 @@
 #include "OCC/bip39/bip39.h"
 #include "OCC/bip32/bip32.h"
 #include "OCC/edsa/edsa.h"
+#include "OCC/adress/adress.h"
 
 #ifdef DSE050
   #include "OCC/se050/se050.h"
@@ -96,6 +97,8 @@ void loop()
         msg.route("/IHW/valiseSeedSet", routeValiseSeedSet);
         msg.route("/IHW/valiseSeedGet", routeValiseSeedGet);
         msg.route("/IHW/valiseSign", routeValiseSign);
+        msg.route("/IHW/valiseAddrFamilyGet", routeValiseAddrFamilyGet);
+        msg.route("/IHW/valiseAddrFamily", routeValiseAddrFamily);
 
         /* Bip39 functions*/
         msg.route("/IHW/bip39GetLanguages", routeBip39GetLanguages);
@@ -114,7 +117,6 @@ void loop()
         msg.route("/IHW/bip32_key_init", routeBip32KeyInit);
         msg.route("/IHW/bip32_key_from_seed", routeBip32KeyFromSeed);
         msg.route("/IHW/bip32_key_from_parent", routeBip32KeyFromParent);
-        msg.route("/IHW/bip32_key_from_parent2", routeBip32KeyFromParent2);
         msg.route("/IHW/bip32_key_from_parent_path_string", routeBip32KeyFromParentPathString);
         msg.route("/IHW/bip32_key_to_base58", routeBip32KeyToBase58);
         msg.route("/IHW/bip32_key_from_base58", routeBip32KeyFromBase58);
@@ -132,6 +134,12 @@ void loop()
         /* Only available in most recent version 0.8.8 */
         msg.route("/IHW/wallySymKeyFromSeed", routeWallySymKeyFromSeed);
         msg.route("/IHW/wallySymKeyFromParent", routeWallySymKeyFromParent);
+
+        // adress functions
+        msg.route("/IHW/wallyWifToPublicKey", routeWallyWifToPublicKey);
+        msg.route("/IHW/wallyWifToBytes", routeWallyWifToBytes);
+        msg.route("/IHW/wallyBip32KeyToAddress", routeWallyBip32KeyToAddress);
+        msg.route("/IHW/routeWallyWifFromBytes", routeWallyWifFromBytes);
 
         msg.route("/IHW/trnd", routeTrnd);
         // msg.route("/IHW/valiseCbor", routeValiseCborEcho);
