@@ -149,7 +149,6 @@ std::vector<uint32_t> getPath(char *pathStr)
 /**
  * Sends an error message using OSC protocol.
  *
- * @param address The address to send the error message to.
  * @param message The error message to send.
  */
 void sendErrorMessage(OSCMessage &msg, const char *message) {
