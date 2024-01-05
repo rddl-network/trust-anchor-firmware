@@ -6,6 +6,8 @@
 
 #include "bip39.h"
 
+#include <Preferences.h>
+
 /* ----------------------------------------------------------------*/
 /* wally bip39 functions                                           */
 /* ----------------------------------------------------------------*/
@@ -302,10 +304,12 @@ void routeBip39MnemonicToPrivateKey(OSCMessage &msg, int addressOffset) {
     String hexStr;
     hexStr = toHex(root.priv_key, 33);
 
+    const uint32_t prefix = get_wif_get_prefix_from_preferences();
+
     char *wif;
     wally_wif_from_bytes (root.priv_key, 
                           EC_PRIVATE_KEY_LEN, 
-                          WALLY_ADDRESS_VERSION_WIF_TESTNET, 
+                          prefix,
                           WALLY_WIF_FLAG_COMPRESSED, 
                           &wif);
 

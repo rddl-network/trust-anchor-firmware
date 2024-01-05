@@ -1,4 +1,8 @@
 #include "utils.h"
+
+#include <Preferences.h>
+
+#include "wally_address.h"
 #include "wally_bip32.h"
 
 #define FROMHEX_MAXLEN 512
@@ -156,4 +160,50 @@ void sendErrorMessage(OSCMessage &msg, const char *message) {
     resp_msg.add("Error: ");
     resp_msg.add(message);
     sendOSCMessage(resp_msg);
+}
+
+uint32_t get_wif_get_prefix_from_preferences() {
+    Preferences valise;
+    valise.begin("vault", false);
+    const String addrFamily = valise.getString("addr_family", "bc"); // Default to "bc" if not set
+    valise.end();
+
+    const uint32_t prefix = (addrFamily == "tb") ? WALLY_ADDRESS_VERSION_WIF_TESTNET : WALLY_ADDRESS_VERSION_WIF_MAINNET;
+
+    return prefix;
+}
+
+uint32_t get_get_prefix_from_preferences() {
+    Preferences valise;
+    valise.begin("vault", false);
+    const String addrFamily = valise.getString("addr_family", "bc"); // Default to "bc" if not set
+    valise.end();
+
+    const uint32_t prefix = (addrFamily == "tb") ? BIP32_VER_TEST_PRIVATE : BIP32_VER_MAIN_PRIVATE;
+
+    return prefix;
+}
+
+struct ext_key getRootKeyFromPreferences(OSCMessage &msg) {
+    Preferences valise;
+    struct ext_key root;
+    int res;
+
+    valise.begin("vault", false);
+    String serialized_root = valise.getString("valise_root_key", "");
+    valise.end();
+
+    if (serialized_root.length() == 0) {
+        sendErrorMessage(msg, "HD key not found in NVS");
+        throw std::runtime_error("HD key not found in NVS");
+    }
+
+    // Deserialize root key from base58 string
+    res = bip32_key_from_base58(serialized_root.c_str(), &root);
+    if (res != WALLY_OK) {
+        sendErrorMessage(msg, "Failed to deserialize HD key");
+        throw std::runtime_error("Failed to deserialize HD key");
+    }
+
+    return root;
 }

@@ -279,29 +279,14 @@ void routeBip32KeyFromSeed(OSCMessage &msg, int addressOffset)
  */
 void routeBip32KeyFromParent(OSCMessage &msg, int addressOffset)
 {
-    Preferences valise;
     int res;
-    struct ext_key root, child_key;
+    struct ext_key child_key;
     OSCMessage resp_msg("/bip32KeyfromParent");
 
     char *xprv = NULL;
     char *xpub = NULL;
 
-    valise.begin("vault", false);
-    String serialized_root = valise.getString("valise_root_key", "");
-    valise.end();
-
-    if (serialized_root.length() == 0) {
-        sendErrorMessage(resp_msg, "HD key not found in NVS");
-        return;
-    }
-
-    // Deserialize the HD key
-    res = bip32_key_from_base58(serialized_root.c_str(), &root);
-    if (res != WALLY_OK) {
-        sendErrorMessage(resp_msg, "Failed to deserialize HD key");
-        return;
-    }
+    const struct ext_key root = getRootKeyFromPreferences(msg);
 
     // Get child number and type
     uint32_t childNum = 0;
@@ -344,29 +329,9 @@ void routeBip32KeyFromParent(OSCMessage &msg, int addressOffset)
  */
 void routeBip32KeyToBase58(OSCMessage &msg, int addressOffset)
 {
-    Preferences valise;
     int res;
-    struct ext_key root;
+    struct ext_key root = getRootKeyFromPreferences(msg);
     OSCMessage resp_msg("/bip32KeytoBase58");
-
-    // Retrieve the serialized HD key from NVS
-    valise.begin("vault", false);
-    String serialized_root = valise.getString("valise_root_key", "");
-    valise.end();
-
-    if (serialized_root.length() == 0) {
-        resp_msg.add("Error: HD key not found in NVS");
-        sendOSCMessage(resp_msg);
-        return;
-    }
-
-    // Deserialize the HD key
-    res = bip32_key_from_base58(serialized_root.c_str(), &root);
-    if (res != WALLY_OK) {
-        resp_msg.add("Error: Failed to deserialize HD key");
-        sendOSCMessage(resp_msg);
-        return;
-    }
 
     // Check the flag
     uint32_t flag = BIP32_FLAG_KEY_PRIVATE;
@@ -398,32 +363,14 @@ void routeBip32KeyToBase58(OSCMessage &msg, int addressOffset)
  */
 void routeBip32KeyFromParentPathString(OSCMessage &msg, int addressOffset)
 {
-    Preferences valise;
     int res;
-    struct ext_key root, child_key;
+    struct ext_key child_key;
     OSCMessage resp_msg("/bip32KeyFromParentPathString");
 
     char *xprv = NULL;
     char *xpub = NULL;
 
-    valise.begin("vault", false);
-    String serialized_root = valise.getString("valise_root_key", "");
-    String addrFamily = valise.getString("addr_family", "bc");
-    valise.end();
-
-    if (serialized_root.length() == 0) {
-        resp_msg.add("Error: HD key not found in NVS");
-        sendOSCMessage(resp_msg);
-        return;
-    }
-
-    // Deserialize the HD key
-    res = bip32_key_from_base58(serialized_root.c_str(), &root);
-    if (res != WALLY_OK) {
-        resp_msg.add("Error: Failed to deserialize HD key");
-        sendOSCMessage(resp_msg);
-        return;
-    }
+    const struct ext_key root = getRootKeyFromPreferences(msg);
 
     // Get Path
     std::vector<uint32_t> childPath;
@@ -434,9 +381,6 @@ void routeBip32KeyFromParentPathString(OSCMessage &msg, int addressOffset)
         msg.getString(1, pathString, len);
         childPath = getPath(pathString);
     }
-
-    // Determine network version number
-    uint32_t version = (addrFamily == "tb") ? BIP32_VER_TEST_PRIVATE : BIP32_VER_MAIN_PRIVATE;
 
     // Derive child key
     res = bip32_key_from_parent_path(&root, childPath.data(), childPath.size(), BIP32_FLAG_KEY_PRIVATE, &child_key);
@@ -474,26 +418,10 @@ void routeBip32KeySerialize(OSCMessage &msg, int addressOffset)
 {
     Preferences valise;
     int res;
-    struct ext_key root;
     ext_key child_key;
     OSCMessage resp_msg("/bip32KeySerialize");
 
-    // Retrieve the serialized HD key from NVS
-    valise.begin("vault", false);
-    String serialized_root = valise.getString("valise_root_key", "");
-    valise.end();
-
-    if (serialized_root.length() == 0) {
-        sendErrorMessage(resp_msg, "HD key not found in NVS");
-        return;
-    }
-
-    // Deserialize the HD key
-    res = bip32_key_from_base58(serialized_root.c_str(), &root);
-    if (res != WALLY_OK) {
-        sendErrorMessage(resp_msg, "Failed to deserialize HD key");
-        return;
-    }
+    const struct ext_key root = getRootKeyFromPreferences(msg);
 
     // Parse derivation path
     std::vector<uint32_t> childPath;

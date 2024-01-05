@@ -18,3 +18,6 @@ size_t toHex(const uint8_t *array, size_t arraySize, char *output, size_t output
 String toHex(const uint8_t *array, size_t arraySize);
 std::vector<uint32_t> getPath(char *pathStr);
 void sendErrorMessage(OSCMessage &msg, const char *message);
+uint32_t get_wif_get_prefix_from_preferences();
+uint32_t get_get_prefix_from_preferences();;
+struct ext_key getRootKeyFromPreferences(OSCMessage &msg);

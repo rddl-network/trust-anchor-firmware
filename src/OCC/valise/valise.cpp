@@ -271,17 +271,16 @@ void routeValiseCborEcho(OSCMessage &msg, int addressOffset)
  * @param String(0) The address family, either "tb" for testbtc or "bc" for btc.
  * @return Generated '0' or '1' string for failure or success. Sending over OSC as string
  */
-void routeValiseAddrFamily(OSCMessage &msg, int addressOffset)
-{
+void routeValiseAddrFamily(OSCMessage &msg, int addressOffset) {
     Preferences valise;
-    if (msg.isString(0))
-    {
+    if (msg.isString(0)) {
         int length = msg.getDataLength(0);
         char addrFamily[length];
         msg.getString(0, addrFamily, length);
 
         // Validate address family
-        if (strcmp(addrFamily, "tb") == 0 || strcmp(addrFamily, "bc") == 0) {
+        if (strcmp(addrFamily, "tb") == 0 || strcmp(addrFamily, "bc") == 0 || 
+            strcmp(addrFamily, "lc") == 0 || strcmp(addrFamily, "lt") == 0) {
             valise.begin("vault", false);
             valise.putString("addr_family", addrFamily);
             valise.end();
@@ -303,8 +302,7 @@ void routeValiseAddrFamily(OSCMessage &msg, int addressOffset)
  *
  * @return The stored address family. Sending over OSC as string
  */
-void routeValiseAddrFamilyGet(OSCMessage &msg, int addressOffset)
-{
+void routeValiseAddrFamilyGet(OSCMessage &msg, int addressOffset) {
     Preferences valise;
     valise.begin("vault", false);
     String addrFamily = valise.getString("addr_family", "bc"); // Default to "bc" if not set

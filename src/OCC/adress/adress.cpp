@@ -22,12 +22,7 @@ void routeWallyWifFromBytes(OSCMessage &msg, int addressOffset)
     uint8_t bytes[32]; // Assuming the byte array size is 32
     char char_bytes[65]; // Double the size for hex representation
 
-    Preferences valise; 
-    valise.begin("vault", false);
-    String addrFamily = valise.getString("addr_family", "bc"); // Default to "bc" if not set
-    valise.end();
-
-    uint32_t prefix = (addrFamily == "tb") ? WALLY_ADDRESS_VERSION_WIF_TESTNET : WALLY_ADDRESS_VERSION_WIF_MAINNET;
+    const uint32_t prefix = get_wif_get_prefix_from_preferences();
 
     if (msg.isString(0))
     {
@@ -71,13 +66,7 @@ void routeWallyWifToBytes(OSCMessage &msg, int addressOffset)
 
     char wif[53]; // WIF strings are typically 51-52 characters long
 
-    // Read the saved address family to determine the prefix
-    Preferences valise;
-    valise.begin("vault", false);
-    String addrFamily = valise.getString("addr_family", "bc"); // Default to "bc" if not set
-    valise.end();
-
-    uint32_t prefix = (addrFamily == "tb") ? WALLY_ADDRESS_VERSION_WIF_TESTNET : WALLY_ADDRESS_VERSION_WIF_MAINNET;
+    const uint32_t prefix = get_wif_get_prefix_from_preferences();
 
     if (msg.isString(0))
     {
@@ -115,31 +104,15 @@ void routeWallyWifToBytes(OSCMessage &msg, int addressOffset)
 void routeWallyBip32KeyToAddress(OSCMessage &msg, int addressOffset)
 {
     Preferences valise;
-    int res;
-    struct ext_key root;
     char *address;
 
-    valise.begin("vault", false);
-    String serialized_root = valise.getString("valise_root_key", "");
-    valise.end();
-
-    if (serialized_root.length() == 0) {
-        sendErrorMessage(msg, "HD key not found in NVS");
-        return;
-    }
-
-    // Deserialize root key from base58 string
-    res = bip32_key_from_base58(serialized_root.c_str(), &root);
-    if (res != WALLY_OK) {
-        sendErrorMessage(msg, "Failed to deserialize HD key");
-        return;
-    }
+    const struct ext_key root = getRootKeyFromPreferences(msg);
 
     // Determine address type
-    uint32_t address_type = (root.version == BIP32_VER_MAIN_PRIVATE) ? WALLY_ADDRESS_VERSION_P2PKH_MAINNET : WALLY_ADDRESS_VERSION_P2PKH_TESTNET;
+    const uint32_t address_type = (root.version == BIP32_VER_MAIN_PRIVATE) ? WALLY_ADDRESS_VERSION_P2PKH_MAINNET : WALLY_ADDRESS_VERSION_P2PKH_TESTNET;
 
     // Generate Bitcoin address from BIP32 key
-    res = wally_bip32_key_to_address(&root, address_type, 0, &address);
+    const int res = wally_bip32_key_to_address(&root, address_type, 0, &address);
     if (res != WALLY_OK) {
         sendErrorMessage(msg, "Failed to generate address from BIP32 key");
         return;
@@ -162,30 +135,12 @@ void routeWallyBip32KeyToAddress(OSCMessage &msg, int addressOffset)
  */
 void routeWallyWifToPublicKey(OSCMessage &msg, int addressOffset)
 {
-    Preferences valise;
-    int res;
-    struct ext_key root;
+    struct ext_key root = getRootKeyFromPreferences(msg);
     uint8_t pub_key[EC_PUBLIC_KEY_LEN];
-    size_t pub_key_len = sizeof(pub_key);
-
-    valise.begin("vault", false);
-    String serialized_root = valise.getString("valise_root_key", "");
-    valise.end();
-
-    if (serialized_root.length() == 0) {
-        sendErrorMessage(msg, "HD key not found in NVS");
-        return;
-    }
-
-    // Deserialize root key from base58 string
-    res = bip32_key_from_base58(serialized_root.c_str(), &root);
-    if (res != WALLY_OK) {
-        sendErrorMessage(msg, "Failed to deserialize HD key");
-        return;
-    }
+    const size_t pub_key_len = sizeof(pub_key);
 
     // Generate public key from HD key's private key
-    res = wally_ec_public_key_from_private_key(root.priv_key, EC_PRIVATE_KEY_LEN, pub_key, pub_key_len);
+    const int res = wally_ec_public_key_from_private_key(root.priv_key, EC_PRIVATE_KEY_LEN, pub_key, pub_key_len);
     if (res != WALLY_OK) {
         sendErrorMessage(msg, "Failed to generate public key from HD key");
         return;
