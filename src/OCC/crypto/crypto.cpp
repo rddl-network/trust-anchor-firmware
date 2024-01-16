@@ -1,5 +1,6 @@
 #include <wally_core.h>
 #include "wally_crypto.h"
+#include <wally_elements.h>
 #include "../utils/utils.h"
 
 #include "crypto.h"
@@ -410,4 +411,36 @@ void routeWallyEcdh(OSCMessage &msg, int addressOffset)
     // resp_msg.add(str_pub_key);
     // resp_msg.add(str_priv_key);
     sendOSCMessage(resp_msg);
+}
+
+void routeSeedToBlindingKey(OSCMessage &msg) {
+    int res;
+
+    // Extract seed from OSC message
+    uint8_t seed[64]; // Assuming a 512-bit seed, adjust size as needed
+    if (msg.isBlob(0)) {
+        size_t length = msg.getDataLength(0);
+        msg.getBlob(0, seed, length);
+    }
+
+    // Generate asset blinding key from seed
+    unsigned char blinding_key[32]; // Size of 256 bits for the blinding key
+    res = wally_asset_blinding_key_from_seed(seed, sizeof(seed), blinding_key, sizeof(blinding_key));
+
+    // Convert blinding_key to a hex string for sending
+    char hex_key[65]; // 64 hex chars + null terminator
+    res = wally_hex_from_bytes(blinding_key, sizeof(blinding_key), hex_key, sizeof(hex_key));
+
+    // Send the result back
+    OSCMessage resp_msg("/Your/BlindingKeyPath");
+    resp_msg.add(hex_key);
+
+    SLIPSerial.beginPacket();
+    resp_msg.send(SLIPSerial);
+    SLIPSerial.endPacket();
+    resp_msg.empty();
+
+    // Clear sensitive data
+    memset(seed, 0, sizeof(seed));
+    memset(blinding_key, 0, sizeof(blinding_key));
 }
