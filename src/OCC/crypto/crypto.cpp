@@ -1,5 +1,5 @@
 #include <wally_core.h>
-#include "wally_crypto.h"
+#include <wally_crypto.h>
 #include <wally_elements.h>
 #include "../utils/utils.h"
 
@@ -413,7 +413,7 @@ void routeWallyEcdh(OSCMessage &msg, int addressOffset)
     sendOSCMessage(resp_msg);
 }
 
-void routeSeedToBlindingKey(OSCMessage &msg) {
+void routeSeedToBlindingKey(OSCMessage &msg, int addressOffset) {
     int res;
 
     // Extract seed from OSC message
@@ -428,11 +428,10 @@ void routeSeedToBlindingKey(OSCMessage &msg) {
     res = wally_asset_blinding_key_from_seed(seed, sizeof(seed), blinding_key, sizeof(blinding_key));
 
     // Convert blinding_key to a hex string for sending
-    char hex_key[65]; // 64 hex chars + null terminator
-    res = wally_hex_from_bytes(blinding_key, sizeof(blinding_key), hex_key, sizeof(hex_key));
+    String hex_key = toHex(blinding_key, sizeof(blinding_key));
 
     // Send the result back
-    OSCMessage resp_msg("/Your/BlindingKeyPath");
+    OSCMessage resp_msg("/IHW/wallyBlindingKeyPath");
     resp_msg.add(hex_key);
 
     SLIPSerial.beginPacket();

@@ -11,4 +11,4 @@ void routeWallyEcSigVerify2(OSCMessage &msg, int addressOffset);
 void routeWallyEcSigToPublicKey(OSCMessage &msg, int addressOffset);
 void routeWallyFormatBitcoinMessage(OSCMessage &msg, int addressOffset);
 void routeWallyEcdh(OSCMessage &msg, int addressOffset);
-void routeSeedToBlindingKey(OSCMessage &msg);
+void routeSeedToBlindingKey(OSCMessage &msg, int adressOffset);
