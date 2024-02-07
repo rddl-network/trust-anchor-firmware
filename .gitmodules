@@ -1,12 +1,12 @@
 [submodule "lib/libwally-embedded"]
 	path = lib/libwally-embedded
-	url = git@github.com:diybitcoinhardware/libwally-embedded.git
+	url = https://github.com/diybitcoinhardware/libwally-embedded.git
 [submodule "lib/secp256k1-embedded"]
 	path = lib/secp256k1-embedded
 	url = https://github.com/diybitcoinhardware/secp256k1-embedded.git
 [submodule "lib/OSC"]
 	path = lib/OSC
-	url = git@github.com:rddl-network/OSC.git
+	url = https://github.com/rddl-network/OSC.git
 [submodule "lib/se050"]
 	path = lib/se050
-	url = git@github.com:rddl-network/seal-edge-apdu.git
+	url = https://github.com/rddl-network/seal-edge-apdu.git
