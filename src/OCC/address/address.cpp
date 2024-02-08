@@ -2,9 +2,7 @@
 #include "../utils/utils.h"
 #include "OSCMessage.h"
 #include "wally_bip32.h"
-#include "wally_bip39.h"
 #include "wally_crypto.h"
-#include "wally_address.h"
 #include <Preferences.h>
 #include "wally_core.h"
 #include "wally_address.h"

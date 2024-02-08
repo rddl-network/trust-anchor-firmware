@@ -9,7 +9,7 @@
 #include "OCC/bip39/bip39.h"
 #include "OCC/bip32/bip32.h"
 #include "OCC/edsa/edsa.h"
-#include "OCC/adress/adress.h"
+#include "OCC/address/adress.h"
 
 #ifdef DSE050
   #include "OCC/se050/se050.h"
