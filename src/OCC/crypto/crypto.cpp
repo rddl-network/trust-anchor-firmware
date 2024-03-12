@@ -1,6 +1,5 @@
 #include <wally_core.h>
 #include <wally_crypto.h>
-#include <wally_elements.h>
 #include "../utils/utils.h"
 
 #include "crypto.h"
@@ -413,33 +412,35 @@ void routeWallyEcdh(OSCMessage &msg, int addressOffset)
     sendOSCMessage(resp_msg);
 }
 
-void routeSeedToBlindingKey(OSCMessage &msg, int addressOffset) {
-    int res;
 
-    // Extract seed from OSC message
-    uint8_t seed[64]; // Assuming a 512-bit seed, adjust size as needed
-    if (msg.isBlob(0)) {
-        size_t length = msg.getDataLength(0);
-        msg.getBlob(0, seed, length);
-    }
+// TODO: function wally_asset_blinding_key_from_seed is not found seems to not be part of the wally-core library or not expose. To ensure it compilese we have to comment it out for now.
+// void routeSeedToBlindingKey(OSCMessage &msg, int addressOffset) {
+//     int res;
 
-    // Generate asset blinding key from seed
-    unsigned char blinding_key[32]; // Size of 256 bits for the blinding key
-    res = wally_asset_blinding_key_from_seed(seed, sizeof(seed), blinding_key, sizeof(blinding_key));
+//     // Extract seed from OSC message
+//     uint8_t seed[64]; // Assuming a 512-bit seed, adjust size as needed
+//     if (msg.isBlob(0)) {
+//         size_t length = msg.getDataLength(0);
+//         msg.getBlob(0, seed, length);
+//     }
 
-    // Convert blinding_key to a hex string for sending
-    String hex_key = toHex(blinding_key, sizeof(blinding_key));
+//     // Generate asset blinding key from seed
+//     unsigned char blinding_key[32]; // Size of 256 bits for the blinding key
+//     res = wally_asset_blinding_key_from_seed(seed, sizeof(seed), blinding_key, sizeof(blinding_key));
 
-    // Send the result back
-    OSCMessage resp_msg("/IHW/wallyBlindingKeyPath");
-    resp_msg.add(hex_key);
+//     // Convert blinding_key to a hex string for sending
+//     String hex_key = toHex(blinding_key, sizeof(blinding_key));
 
-    SLIPSerial.beginPacket();
-    resp_msg.send(SLIPSerial);
-    SLIPSerial.endPacket();
-    resp_msg.empty();
+//     // Send the result back
+//     OSCMessage resp_msg("/IHW/wallyBlindingKeyPath");
+//     resp_msg.add(hex_key);
 
-    // Clear sensitive data
-    memset(seed, 0, sizeof(seed));
-    memset(blinding_key, 0, sizeof(blinding_key));
-}
+//     SLIPSerial.beginPacket();
+//     resp_msg.send(SLIPSerial);
+//     SLIPSerial.endPacket();
+//     resp_msg.empty();
+
+//     // Clear sensitive data
+//     memset(seed, 0, sizeof(seed));
+//     memset(blinding_key, 0, sizeof(blinding_key));
+// }
