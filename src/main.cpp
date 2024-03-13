@@ -9,7 +9,7 @@
 #include "OCC/bip39/bip39.h"
 #include "OCC/bip32/bip32.h"
 #include "OCC/edsa/edsa.h"
-#include "OCC/adress/adress.h"
+#include "OCC/address/address.h"
 
 #ifdef DSE050
   #include "OCC/se050/se050.h"
@@ -85,7 +85,7 @@ void loop()
         msg.route("/IHW/wallyEcSigToPublicKey", routeWallyEcSigToPublicKey);
         msg.route("/IHW/wallyFormatBitcoinMessage", routeWallyFormatBitcoinMessage);
         msg.route("/IHW/wallyEcdh", routeWallyEcdh);
-        msg.route("/IHW/wallyBlindingKeyPath", routeSeedToBlindingKey);
+        // msg.route("/IHW/wallyBlindingKeyPath", routeSeedToBlindingKey);
 
         // only available starting from version release_0.8.8
         // msg.route("/IHW/wallyS2cSigFromBytes", routeWallyS2cSigFromBytes);

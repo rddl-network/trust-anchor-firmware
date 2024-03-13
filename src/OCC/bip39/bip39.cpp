@@ -292,13 +292,15 @@ void routeBip39MnemonicToPrivateKey(OSCMessage &msg, int addressOffset) {
     size_t seed_len;
     res = bip39_mnemonic_to_seed(phrase, password, seed, sizeof(seed), &seed_len);
     // Generate BIP32 master key from seed
-    res = bip32_key_from_seed(seed, sizeof(seed), BIP32_VER_TEST_PRIVATE, 0, &root);
+    uint32_t bip32_prefix = get_get_prefix_from_preferences();
+    res = bip32_key_from_seed(seed, sizeof(seed), bip32_prefix, 0, &root);
 
     // // Clear seed from memory for security
     memset(seed, 0, sizeof(seed_len));
 
     // // // Convert master_key to base58 string
     char *base58_master_key = NULL;
+
     res = bip32_key_to_base58(&root, BIP32_FLAG_KEY_PRIVATE, &base58_master_key);
 
     String hexStr;
