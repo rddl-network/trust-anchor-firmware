@@ -1,0 +1,21 @@
+diff --git a/src/elements.c b/src/elements.c
+index 1327c17..012ff1c 100644
+--- a/src/elements.c
++++ b/src/elements.c
+@@ -1,13 +1,13 @@
+ #include "internal.h"
+ #include <include/wally_address.h>
+ #include <include/wally_bip32.h>
+-#include <include/wally_elements.h>
++#include "../include/wally_elements.h"
+ #include <include/wally_crypto.h>
+ #include <include/wally_symmetric.h>
+ #include "secp256k1/include/secp256k1_generator.h"
+ #include "secp256k1/include/secp256k1_rangeproof.h"
+-#include "src/secp256k1/include/secp256k1_surjectionproof.h"
+-#include "src/secp256k1/include/secp256k1_whitelist.h"
++#include "secp256k1/include/secp256k1_surjectionproof.h"
++#include "secp256k1/include/secp256k1_whitelist.h"
+ #include "secp256k1/include/secp256k1_ecdh.h"
+ #include "ccan/ccan/crypto/sha256/sha256.h"
+ #include <stdbool.h>

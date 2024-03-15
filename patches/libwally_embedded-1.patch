@@ -1,0 +1,42 @@
+diff --git a/library.properties b/library.properties
+index 14410a5..951d611 100644
+--- a/library.properties
++++ b/library.properties
+@@ -8,4 +8,4 @@ category=Uncategorized
+ url=
+ architectures=*
+ depends=secp256k1
+-includes=secp256k1.h,wally_core.h,wally_crypto.h,wally_address,wally_bip32.h,wally_bip39.h,wally_psbt.h,wally_script.h,wally_transaction.h
+\ No newline at end of file
++includes=secp256k1.h,wally_core.h,wally_crypto.h,wally_address,wally_bip32.h,wally_bip39.h,wally_psbt.h,wally_script.h,wally_transaction.h,wally_elements.h
+\ No newline at end of file
+diff --git a/src/wally_config.h b/src/wally_config.h
+index 3b27c3f..293e68e 100644
+--- a/src/wally_config.h
++++ b/src/wally_config.h
+@@ -2,6 +2,7 @@
+ #ifndef LIBWALLYCORE_CONFIG_H
+ #define LIBWALLYCORE_CONFIG_H
+ 
++#define BUILD_ELEMENTS
+ #include "ccan_config.h"
+ 
+ #endif /*LIBWALLYCORE_CONFIG_H*/        
+diff --git a/src/elements.c b/src/elements.c
+new file mode 100644
+index 0000000..7b309be
+--- /dev/null
++++ b/src/elements.c
+@@ -0,0 +1,2 @@
++#include "wally_config.h"
++#include "../libwally-core/src/elements.c"
+\ No newline at end of file
+diff --git a/src/wally_elements.h b/src/wally_elements.h
+new file mode 100644
+index 0000000..f055af6
+--- /dev/null
++++ b/src/wally_elements.h
+@@ -0,0 +1,2 @@
++#include "wally_config.h"
++#include "../libwally-core/include/wally_elements.h"
+\ No newline at end of file

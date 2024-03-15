@@ -85,7 +85,7 @@ void loop()
         msg.route("/IHW/wallyEcSigToPublicKey", routeWallyEcSigToPublicKey);
         msg.route("/IHW/wallyFormatBitcoinMessage", routeWallyFormatBitcoinMessage);
         msg.route("/IHW/wallyEcdh", routeWallyEcdh);
-        // msg.route("/IHW/wallyBlindingKeyPath", routeSeedToBlindingKey);
+        msg.route("/IHW/wallyBlindingKeyPath", routeSeedToBlindingKey);
 
         // only available starting from version release_0.8.8
         // msg.route("/IHW/wallyS2cSigFromBytes", routeWallyS2cSigFromBytes);
