@@ -79,6 +79,9 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.BOT_PAT }}
           submodules: recursive
+      - name: Apply patches
+        run: |
+          ./patch_libs.sh
       - name: Run sonar-scanner
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
