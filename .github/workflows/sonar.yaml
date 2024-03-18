@@ -81,7 +81,7 @@ jobs:
           submodules: recursive
       - name: Apply patches
         run: |
-          ./patch_libs.sh
+          ./apply_patches.sh
       - name: Run sonar-scanner
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
