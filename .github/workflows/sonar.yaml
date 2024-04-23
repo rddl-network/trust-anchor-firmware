@@ -1,7 +1,9 @@
 ---
 name: Sonar Scan
 on:
-  [pull_request]
+  push:
+    branches:
+      - main
 jobs:
   build:
     name: Sonar Scan
@@ -92,4 +94,4 @@ jobs:
             sonarqube-out/build-wrapper-dump.json
           sed -i 's|\.pio/|bin/.pio/|g' \
             sonarqube-out/build-wrapper-dump.json
-          sonar-scanner -X -Dsonar.cfamily.build-wrapper-output=sonarqube-out
+          sonar-scanner -Dsonar.cfamily.build-wrapper-output=sonarqube-out
