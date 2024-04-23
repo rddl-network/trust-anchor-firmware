@@ -93,7 +93,7 @@ jobs:
             --lib="./lib/secp256k1-embedded/" --lib="./lib/OSC/" --lib="./lib/libwally-embedded/"
           # Hack - point sonarqube to the real sources not the copy of it
           # See also https://community.sonarsource.com/t/scanning-platformio-c-embeded-projects/35141/2
-          sed -i 's|trusted-anchor-firmware/bin|trusted-anchor-firmware|g' \
+          sed -i 's|trust-anchor-firmware/bin|trust-anchor-firmware|g' \
             sonarqube-out/build-wrapper-dump.json
           sed -i 's|\.pio/|bin/.pio/|g' \
             sonarqube-out/build-wrapper-dump.json
